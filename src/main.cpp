@@ -1,3 +1,9 @@
+#include "board.h"
+#include <iostream>
 
 
-int main() { return 0; }
+int main() { 
+    Board board;
+    std::cout << board << std::endl;
+    return 0;
+ }
