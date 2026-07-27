@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 4. Define the executable and its source files
-add_executable(citterfish src/main.cpp src/board.cpp)
+add_executable(citterfish src/main.cpp src/board.cpp src/zobrist.cpp)
 target_compile_options(citterfish PRIVATE
     -Ofast
 )

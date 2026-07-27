@@ -1,16 +1,15 @@
 #include "board.h"
 #include "types.h"
+#include "zobrist.h"
 #include <iostream>
 #include <ranges>
 #include <string>
 
-Board::Board(const std::string &fen) {
-  pieces = {};
-  castlingRights = 0;
-  enPassantSquare = 0;
-  zobristHash = 0;
-
-  int index = 56;
+namespace citterfish {
+Board::Board(const std::string &fen)
+    : pieces{}, castlingRights(0), zobristHash(0), halfmoveClock(0),
+      fullmoveClock(0) {
+  uint8_t index = 56;
   int i = 0;
   for (; i < fen.length() && fen.at(i) != ' '; i++) {
     char c = fen.at(i);
@@ -22,10 +21,15 @@ Board::Board(const std::string &fen) {
       index += (c - '0');
     } else {
       pieces[charToColor(c)][charToPiece(c)] |= 1ULL << index;
+      zobristHash ^= zobrist::getPieceKey(charToColor(c), charToPiece(c),
+                                          static_cast<Square>(index));
       ++index;
     }
   }
   whiteToMove = fen.at(i + 1) == 'w';
+  if (whiteToMove) {
+    zobristHash ^= zobrist::getSideToMoveKey();
+  }
   i += 3;
   for (; i < fen.length() && fen.at(i) != ' '; i++) {
     switch (fen.at(i)) {
@@ -43,10 +47,13 @@ Board::Board(const std::string &fen) {
       break;
     }
   }
+  zobristHash ^= zobrist::getCastlingKey(castlingRights);
   if (fen.at(i + 1) == '-') {
     enPassantSquare = 0;
   } else {
     enPassantSquare = 1ULL << squareFromString(fen.substr(i + 1, 2));
+    zobristHash ^= zobrist::getEnPassantKey(
+        static_cast<Square>(std::countr_zero(enPassantSquare)));
   }
   halfmoveClock = fen.at(i + 3) - '0';
   fullmoveClock = fen.at(i + 5) - '0';
@@ -87,7 +94,9 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
             std::string("\n");
   output += "Halfmove clock: " + std::to_string(b.getHalfmoveClock()) + "\n";
   output += "Fullmove clock: " + std::to_string(b.getFullmoveClock()) + "\n";
+  output += "Zobrist hash: " + std::to_string(b.getZobristHash()) + "\n";
   output += "FEN: " + b.toFen() + "\n";
   os << output;
   return os;
 }
+} // namespace citterfish

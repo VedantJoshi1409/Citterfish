@@ -5,6 +5,7 @@
 #include <string>
 
 using Bitboard = std::uint64_t;
+using Key = std::uint64_t;
 
 enum Color { WHITE, BLACK, BAD_COLOR };
 

@@ -1,9 +1,10 @@
 #include "board.h"
+#include "zobrist.h"
 #include <iostream>
 
-
-int main() { 
-    Board board;
-    std::cout << board << std::endl;
-    return 0;
- }
+int main() {
+  citterfish::zobrist::initializeZobristKeys();
+  citterfish::Board board;
+  std::cout << board << std::endl;
+  return 0;
+}

@@ -8,6 +8,8 @@
 #include <sstream>
 #include <string>
 
+namespace citterfish {
+
 class Board {
 
 private:
@@ -18,7 +20,7 @@ private:
   Bitboard enPassantSquare;
   uint16_t halfmoveClock;
   uint16_t fullmoveClock;
-  uint64_t zobristHash;
+  Key zobristHash;
 
 public:
   Board(const std::string &fen);
@@ -34,6 +36,7 @@ public:
   void setHalfmoveClock(const uint16_t clock) { halfmoveClock = clock; }
   uint16_t getFullmoveClock() const { return fullmoveClock; }
   void setFullmoveClock(const uint16_t clock) { fullmoveClock = clock; }
+  Key getZobristHash() const { return zobristHash; }
 
   std::array<std::array<std::string, 8>, 8> toStringBoard() const {
     std::array<std::array<std::string, 8>, 8> stringBoard;
@@ -103,3 +106,4 @@ public:
 };
 
 std::ostream &operator<<(std::ostream &os, const Board &b);
+} // namespace citterfish
