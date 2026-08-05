@@ -136,8 +136,7 @@ class Move {
   constexpr Square getToSquare() const { return static_cast<Square>((moveData >> 6) & 0x3F); }
   constexpr MoveType getMoveType() const { return static_cast<MoveType>((moveData >> 14) & 0x03); }
   constexpr Piece getPromotionPiece() const { return static_cast<Piece>(((moveData >> 12) & 0x03) + 1); }
-
 };
 
-
+constexpr uint8_t MAX_MOVES = 224;
 }
