@@ -26,17 +26,21 @@ public:
   Board(const std::string &fen);
   Board();
 
-  constexpr bool getWhiteToMove() const { return whiteToMove; }
+  Bitboard getPieces(Color color, Piece piece) const {
+    return pieces[color][piece];
+  }
+
+  bool getWhiteToMove() const { return whiteToMove; }
   void setWhiteToMove(const bool toMove) { whiteToMove = toMove; }
-  constexpr uint8_t getCastlingRights() const { return castlingRights; }
+  uint8_t getCastlingRights() const { return castlingRights; }
   void setCastlingRights(const uint8_t rights) { castlingRights = rights; }
-  constexpr Bitboard getEnPassantSquare() const { return enPassantSquare; }
+  Bitboard getEnPassantSquare() const { return enPassantSquare; }
   void setEnPassantSquare(const Bitboard square) { enPassantSquare = square; }
-  constexpr uint16_t getHalfmoveClock() const { return halfmoveClock; }
+  uint16_t getHalfmoveClock() const { return halfmoveClock; }
   void setHalfmoveClock(const uint16_t clock) { halfmoveClock = clock; }
-  constexpr uint16_t getFullmoveClock() const { return fullmoveClock; }
+  uint16_t getFullmoveClock() const { return fullmoveClock; }
   void setFullmoveClock(const uint16_t clock) { fullmoveClock = clock; }
-  constexpr Key getZobristHash() const { return zobristHash; }
+  Key getZobristHash() const { return zobristHash; }
 
   std::array<std::array<std::string, 8>, 8> toStringBoard() const {
     std::array<std::array<std::string, 8>, 8> stringBoard;
