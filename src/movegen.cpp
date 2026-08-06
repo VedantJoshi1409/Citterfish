@@ -1,6 +1,7 @@
 #include "movegen.h"
 #include "types.h"
 #include "board.h"
+#include "attacks.h"
 
 namespace citterfish {
     template <Direction D>
@@ -73,8 +74,23 @@ namespace citterfish {
         }
     }
 
+    void generateKnightMoves(Bitboard knights, Bitboard friendlyOccupied, MoveList &moveList) {
+        Bitboard bb = knights;
+        while (bb) {
+            Square from = static_cast<Square>(std::countr_zero(bb));
+            Bitboard attacks = attacks::getKnightAttacks(from) & ~friendlyOccupied;
+            while (attacks) {
+                Square to = static_cast<Square>(std::countr_zero(attacks));
+                moveList.addMove(Move(from, to));
+                attacks &= attacks - 1; //clear lsb
+            }
+            bb &= bb - 1; //clear lsb
+        }
+    }
+
     void generateMoves(const Board &board, MoveList &moveList) {
         moveList.count = 0;
-        generatePawnMoves<NORTH>(board.getPieces(WHITE, PAWN), 0ULL, board.getPieces(WHITE, PAWN), moveList);
+        generatePawnMoves<NORTH>(board.getPieces(WHITE, PAWN), board.getOccupied(BLACK), board.getOccupied(BLACK) | board.getOccupied(WHITE), moveList);
+        generateKnightMoves(board.getPieces(WHITE, KNIGHT), board.getOccupied(WHITE), moveList);
     }
 }

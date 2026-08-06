@@ -1,13 +1,15 @@
 #include "board.h"
 #include "zobrist.h"
 #include "movegen.h"
+#include "attacks.h"
 #include <iostream>
 
 
 int main() {
   using namespace citterfish;
   zobrist::initializeZobristKeys();
-  Board board("8/P7/1P6/1P6/8/8/8/8 w KQkq - 0 1");
+  attacks::initializeKnightAttacks();
+  Board board;
   std::cout << board << std::endl;
 
   MoveList moveList;
@@ -17,10 +19,6 @@ int main() {
     const Move &move = moveList.moves[i];
     std::cout << squareToString(move.getFromSquare()) << " -> "
               << squareToString(move.getToSquare()) << std::endl;
-    if (move.getMoveType() == PROMOTION) {
-      std::cout << "Promotion to "
-                << pieceToChar(move.getPromotionPiece(), WHITE) << std::endl;
-    }
   }
 
   return 0;

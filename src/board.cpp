@@ -57,6 +57,13 @@ Board::Board(const std::string &fen)
   }
   halfmoveClock = fen.at(i + 3) - '0';
   fullmoveClock = fen.at(i + 5) - '0';
+
+  occupied[WHITE] = pieces[WHITE][PAWN] | pieces[WHITE][KNIGHT] |
+                    pieces[WHITE][BISHOP] | pieces[WHITE][ROOK] |
+                    pieces[WHITE][QUEEN] | pieces[WHITE][KING];
+  occupied[BLACK] = pieces[BLACK][PAWN] | pieces[BLACK][KNIGHT] |
+                    pieces[BLACK][BISHOP] | pieces[BLACK][ROOK] |
+                    pieces[BLACK][QUEEN] | pieces[BLACK][KING];
 }
 
 Board::Board()

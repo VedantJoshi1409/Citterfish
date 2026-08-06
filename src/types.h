@@ -3,10 +3,23 @@
 #include <cctype>
 #include <cstdint>
 #include <string>
+#include <iostream>
 
 namespace citterfish {
 
 using Bitboard = std::uint64_t;
+inline void printBB(Bitboard bb) {
+  std::cout << "\nBitboard: " << bb << std::endl;
+  for (int rank = 7; rank >= 0; --rank) {
+    for (int file = 0; file < 8; ++file) {
+      int square = rank * 8 + file;
+      std::cout << ((bb & (1ULL << square)) ? '1' : '0') << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+
 using Key = std::uint64_t;
 
 
@@ -109,7 +122,7 @@ inline std::string squareToString(Square square) {
 }
 
 
-enum Direction : int8_t { NORTH = 8, SOUTH = -8, EAST = -1, WEST = 1 };
+enum Direction : int8_t { NORTH = 8, SOUTH = -8, EAST = 1, WEST = -1 };
 enum Files : Bitboard { FILE_A = 0x0101010101010101ULL, FILE_B = 0x0202020202020202ULL, FILE_C = 0x0404040404040404ULL, FILE_D = 0x0808080808080808ULL, FILE_E = 0x1010101010101010ULL, FILE_F = 0x2020202020202020ULL, FILE_G = 0x4040404040404040ULL, FILE_H = 0x8080808080808080ULL };
 enum Ranks : Bitboard { RANK_1 = 0x00000000000000FFULL, RANK_2 = 0x000000000000FF00ULL, RANK_3 = 0x0000000000FF0000ULL, RANK_4 = 0x00000000FF000000ULL, RANK_5 = 0x000000FF00000000ULL, RANK_6 = 0x0000FF0000000000ULL, RANK_7 = 0x00FF000000000000ULL, RANK_8 = 0xFF00000000000000ULL };
 
