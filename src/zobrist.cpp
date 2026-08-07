@@ -1,6 +1,5 @@
 #include "zobrist.h"
 #include <array>
-#include <random>
 
 namespace citterfish::zobrist {
 namespace {
@@ -11,21 +10,21 @@ Key sideToMoveKey;
 } // namespace
 
 bool initializeZobristKeys(uint64_t seed) {
-  std::mt19937_64 rng(seed);
+  PRNG rng(seed);
   for (auto &colorArray : pieceKeys) {
     for (auto &pieceArray : colorArray) {
       for (auto &key : pieceArray) {
-        key = rng();
+        key = rng.next();
       }
     }
   }
   for (auto &key : castlingKeys) {
-    key = rng();
+    key = rng.next();
   }
   for (auto &key : enPassantKeys) {
-    key = rng();
+    key = rng.next();
   }
-  sideToMoveKey = rng();
+  sideToMoveKey = rng.next();
   return true;
 }
 

@@ -86,6 +86,11 @@ namespace citterfish::attacks {
         }
     }
 
+    void initializeAttacks() {
+        initializeKnightAttacks();
+        initializeKingAttacks();
+    }
+
     Bitboard getKnightAttacks(Square square) {
         return knightAttacks[static_cast<int>(square)];
     }

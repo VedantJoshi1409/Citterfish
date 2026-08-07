@@ -157,4 +157,23 @@ class Move {
 };
 
 constexpr uint8_t MAX_MOVES = 224;
+
+class PRNG {
+  uint64_t state;
+
+  public:
+  constexpr explicit PRNG(uint64_t seed) : state(seed) {}
+
+  constexpr uint64_t next() {
+      state ^= (state >> 12);
+      state ^= (state << 25);
+      state ^= (state >> 27);
+      return state * 2685821657736338717ULL;
+
+  };
+
+  constexpr uint64_t sparse() {
+      return next() & next() & next();
+  }
+};
 }

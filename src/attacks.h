@@ -3,10 +3,7 @@
 #include "types.h"
 
 namespace citterfish::attacks {
-    void initializeKnightAttacks();
-    void initializeKingAttacks();
-    void initializeBishopAttacks();
-    void initializeRookAttacks();
+    void initializeAttacks();
     Bitboard getKnightAttacks(Square square);
     Bitboard getKingAttacks(Square square);
     Bitboard getBishopAttacks(Square square);
