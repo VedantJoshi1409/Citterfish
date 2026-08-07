@@ -5,6 +5,9 @@
 namespace citterfish::attacks {
     namespace {
         std::array<Bitboard, 64> knightAttacks;
+        std::array<Bitboard, 64> kingAttacks;
+        std::array<Bitboard, 64> bishopAttacks;
+        std::array<Bitboard, 64> rookAttacks;
     }
 
     void initializeKnightAttacks() {
@@ -49,7 +52,45 @@ namespace citterfish::attacks {
         }
     }
 
+    void initializeKingAttacks() {
+        for (int square = 0; square < 64; ++square) {
+            Bitboard attacks = 0;
+            int rank = square / 8;
+            int file = square % 8;
+
+            if (rank < 7) { //Can do up left, up, up right
+                if (file > 0) { //up left
+                    attacks |= 1ULL << (square + NORTH + WEST);
+                }
+                attacks |= 1ULL << (square + NORTH); //up
+                if (file < 7) { //up right
+                    attacks |= 1ULL << (square + NORTH + EAST);
+                }
+            }
+            if (file > 0) { //Can do left
+                attacks |= 1ULL << (square + WEST);
+            }
+            if (file < 7) { //Can do right
+                attacks |= 1ULL << (square + EAST);
+            }
+            if (rank > 0) { //Can do down left, down, down right
+                if (file > 0) { //down left
+                    attacks |= 1ULL << (square + SOUTH + WEST);
+                }
+                attacks |= 1ULL << (square + SOUTH); //down
+                if (file < 7) { //down right
+                    attacks |= 1ULL << (square + SOUTH + EAST);
+                }
+            }
+            kingAttacks[static_cast<int>(square)] = attacks;
+        }
+    }
+
     Bitboard getKnightAttacks(Square square) {
         return knightAttacks[static_cast<int>(square)];
+    }
+
+    Bitboard getKingAttacks(Square square) {
+        return kingAttacks[static_cast<int>(square)];
     }
 }
