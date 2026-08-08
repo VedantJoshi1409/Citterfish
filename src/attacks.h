@@ -4,9 +4,22 @@
 #include "types.h"
 
 namespace citterfish::attacks {
+namespace detail {
+inline std::array<Bitboard, 64> knightAttacks;
+inline std::array<Bitboard, 64> kingAttacks;
+} // namespace detail
+
 void initializeAttacks();
 Bitboard getKnightAttacks(Square square);
 Bitboard getKingAttacks(Square square);
+
+inline Bitboard getKnightAttacks(Square square) {
+  return detail::knightAttacks[static_cast<int>(square)];
+}
+
+inline Bitboard getKingAttacks(Square square) {
+  return detail::kingAttacks[static_cast<int>(square)];
+}
 
 template <Piece P>
 inline Bitboard getSlidingAttacks(Square square, Bitboard occupied) {

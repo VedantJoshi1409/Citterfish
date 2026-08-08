@@ -4,9 +4,6 @@
 
 namespace citterfish::attacks {
 namespace {
-std::array<Bitboard, 64> knightAttacks;
-std::array<Bitboard, 64> kingAttacks;
-
 void initializeKnightAttacks() {
   for (int square = 0; square < 64; ++square) {
     Bitboard attacks = 0;
@@ -45,7 +42,7 @@ void initializeKnightAttacks() {
         }
       }
     }
-    knightAttacks[static_cast<int>(square)] = attacks;
+    detail::knightAttacks[static_cast<int>(square)] = attacks;
   }
 }
 
@@ -79,7 +76,7 @@ void initializeKingAttacks() {
         attacks |= 1ULL << (square + SOUTH + EAST);
       }
     }
-    kingAttacks[static_cast<int>(square)] = attacks;
+    detail::kingAttacks[static_cast<int>(square)] = attacks;
   }
 }
 } // namespace
@@ -89,14 +86,6 @@ void initializeAttacks() {
   initializeKingAttacks();
   fillAttackMap<ROOK>();
   fillAttackMap<BISHOP>();
-}
-
-Bitboard getKnightAttacks(Square square) {
-  return knightAttacks[static_cast<int>(square)];
-}
-
-Bitboard getKingAttacks(Square square) {
-  return kingAttacks[static_cast<int>(square)];
 }
 
 } // namespace citterfish::attacks
