@@ -1,5 +1,6 @@
 /*
 Leaving this here for now
+
 void recordMagic(uint64_t state, uint64_t magic, Square square,
                  int constructiveCollisions, uint64_t maxIdx, int shiftOffset,
                  std::ofstream &outputFile) {

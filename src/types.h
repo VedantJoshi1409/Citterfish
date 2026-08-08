@@ -189,6 +189,9 @@ public:
 
 constexpr uint8_t MAX_MOVES = 224;
 
+constexpr uint32_t ROOK_TABLE_SIZE = 88024;
+constexpr uint32_t BISHOP_TABLE_SIZE = 4782;
+
 class PRNG {
   uint64_t state;
 

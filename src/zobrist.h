@@ -4,9 +4,23 @@
 #include <array>
 
 namespace citterfish::zobrist {
+
+namespace detail {
+inline std::array<std::array<std::array<Key, 64>, 6>, 2> pieceKeys;
+inline std::array<Key, 16> castlingKeys;
+inline std::array<Key, 64> enPassantKeys; // file only — see below
+inline Key sideToMoveKey;
+} // namespace detail
+
+inline Key getPieceKey(Color c, Piece p, Square s) {
+  return detail::pieceKeys[c][p][s];
+}
+inline Key getCastlingKey(uint8_t r) { return detail::castlingKeys[r]; }
+inline Key getEnPassantKey(Square square) {
+  return detail::enPassantKeys[square];
+}
+inline Key getSideToMoveKey() { return detail::sideToMoveKey; }
+
 bool initializeZobristKeys(uint64_t seed = 0xDEADBEEFCAFEBABEULL);
-Key getPieceKey(Color color, Piece piece, Square square);
-Key getCastlingKey(uint8_t rights);
-Key getEnPassantKey(Square square);
-Key getSideToMoveKey();
+
 } // namespace citterfish::zobrist

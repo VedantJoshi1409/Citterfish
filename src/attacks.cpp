@@ -1,10 +1,6 @@
 #include "attacks.h"
 #include "types.h"
-#include <algorithm>
 #include <array>
-#include <format>
-#include <fstream>
-#include <iostream>
 
 namespace citterfish::attacks {
 namespace {
@@ -91,6 +87,8 @@ void initializeKingAttacks() {
 void initializeAttacks() {
   initializeKnightAttacks();
   initializeKingAttacks();
+  fillAttackMap<ROOK>();
+  fillAttackMap<BISHOP>();
 }
 
 Bitboard getKnightAttacks(Square square) {
@@ -100,4 +98,5 @@ Bitboard getKnightAttacks(Square square) {
 Bitboard getKingAttacks(Square square) {
   return kingAttacks[static_cast<int>(square)];
 }
+
 } // namespace citterfish::attacks
