@@ -2,8 +2,8 @@
 
 #include <cctype>
 #include <cstdint>
-#include <string>
 #include <iostream>
+#include <string>
 
 namespace citterfish {
 
@@ -19,9 +19,7 @@ inline void printBB(Bitboard bb) {
   }
 }
 
-
 using Key = std::uint64_t;
-
 
 enum Color : uint8_t { WHITE, BLACK, BAD_COLOR };
 enum Piece : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, BAD_PIECE };
@@ -71,7 +69,6 @@ inline Piece charToPiece(char c) {
   return BAD_PIECE;
 }
 
-
 enum CastlingRight : uint8_t {
   None = 0,
   WhiteKingSide = 1 << 0,
@@ -79,7 +76,6 @@ enum CastlingRight : uint8_t {
   BlackKingSide = 1 << 2,
   BlackQueenSide = 1 << 3
 };
-
 
 // clang-format off
 enum Square : std::uint8_t {
@@ -121,39 +117,74 @@ inline std::string squareToString(Square square) {
   return std::string{fileChar, rankChar};
 }
 
+inline Square &operator++(Square &square) {
+  square = static_cast<Square>(static_cast<int>(square) + 1);
+  return square;
+}
 
 enum Direction : int8_t { NORTH = 8, SOUTH = -8, EAST = 1, WEST = -1 };
-enum Files : Bitboard { FILE_A = 0x0101010101010101ULL, FILE_B = 0x0202020202020202ULL, FILE_C = 0x0404040404040404ULL, FILE_D = 0x0808080808080808ULL, FILE_E = 0x1010101010101010ULL, FILE_F = 0x2020202020202020ULL, FILE_G = 0x4040404040404040ULL, FILE_H = 0x8080808080808080ULL };
-enum Ranks : Bitboard { RANK_1 = 0x00000000000000FFULL, RANK_2 = 0x000000000000FF00ULL, RANK_3 = 0x0000000000FF0000ULL, RANK_4 = 0x00000000FF000000ULL, RANK_5 = 0x000000FF00000000ULL, RANK_6 = 0x0000FF0000000000ULL, RANK_7 = 0x00FF000000000000ULL, RANK_8 = 0xFF00000000000000ULL };
 
+constexpr Square operator+(Square square, Direction direction) {
+  return static_cast<Square>(static_cast<int>(square) +
+                             static_cast<int>(direction));
+}
 
-enum MoveType : uint8_t {
-  REGULAR,
-  ENPASSANT,
-  CASTLE,
-  PROMOTION
+constexpr Square operator-(Square square, Direction direction) {
+  return static_cast<Square>(static_cast<int>(square) -
+                             static_cast<int>(direction));
+}
+
+enum Files : Bitboard {
+  FILE_A = 0x0101010101010101ULL,
+  FILE_B = 0x0202020202020202ULL,
+  FILE_C = 0x0404040404040404ULL,
+  FILE_D = 0x0808080808080808ULL,
+  FILE_E = 0x1010101010101010ULL,
+  FILE_F = 0x2020202020202020ULL,
+  FILE_G = 0x4040404040404040ULL,
+  FILE_H = 0x8080808080808080ULL
+};
+enum Ranks : Bitboard {
+  RANK_1 = 0x00000000000000FFULL,
+  RANK_2 = 0x000000000000FF00ULL,
+  RANK_3 = 0x0000000000FF0000ULL,
+  RANK_4 = 0x00000000FF000000ULL,
+  RANK_5 = 0x000000FF00000000ULL,
+  RANK_6 = 0x0000FF0000000000ULL,
+  RANK_7 = 0x00FF000000000000ULL,
+  RANK_8 = 0xFF00000000000000ULL
 };
 
-class Move {
-  private:
-  uint16_t moveData;
-    // bits 0-5: from square (6 bits)
-    // bits 6-11: to square (6 bits)
-    // bits 12-13: promotion piece (2 bits)
-    // bits 14-15: flags (2 bits)
+enum MoveType : uint8_t { REGULAR, ENPASSANT, CASTLE, PROMOTION };
 
-  public:
+class Move {
+private:
+  uint16_t moveData;
+  // bits 0-5: from square (6 bits)
+  // bits 6-11: to square (6 bits)
+  // bits 12-13: promotion piece (2 bits)
+  // bits 14-15: flags (2 bits)
+
+public:
   Move() = default;
-  Move(Square from, Square to, MoveType type = REGULAR, Piece promotionPiece = KNIGHT) {
-    moveData = static_cast<uint16_t>(from) |
-               (static_cast<uint16_t>(to) << 6) |
-               ((static_cast<uint16_t>(promotionPiece)-1) << 12) |
+  Move(Square from, Square to, MoveType type = REGULAR,
+       Piece promotionPiece = KNIGHT) {
+    moveData = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6) |
+               ((static_cast<uint16_t>(promotionPiece) - 1) << 12) |
                (static_cast<uint16_t>(type) << 14);
   }
-  constexpr Square getFromSquare() const { return static_cast<Square>(moveData & 0x3F); }
-  constexpr Square getToSquare() const { return static_cast<Square>((moveData >> 6) & 0x3F); }
-  constexpr MoveType getMoveType() const { return static_cast<MoveType>((moveData >> 14) & 0x03); }
-  constexpr Piece getPromotionPiece() const { return static_cast<Piece>(((moveData >> 12) & 0x03) + 1); }
+  constexpr Square getFromSquare() const {
+    return static_cast<Square>(moveData & 0x3F);
+  }
+  constexpr Square getToSquare() const {
+    return static_cast<Square>((moveData >> 6) & 0x3F);
+  }
+  constexpr MoveType getMoveType() const {
+    return static_cast<MoveType>((moveData >> 14) & 0x03);
+  }
+  constexpr Piece getPromotionPiece() const {
+    return static_cast<Piece>(((moveData >> 12) & 0x03) + 1);
+  }
 };
 
 constexpr uint8_t MAX_MOVES = 224;
@@ -161,19 +192,16 @@ constexpr uint8_t MAX_MOVES = 224;
 class PRNG {
   uint64_t state;
 
-  public:
+public:
   constexpr explicit PRNG(uint64_t seed) : state(seed) {}
-
+  constexpr uint64_t getState() { return state; };
   constexpr uint64_t next() {
-      state ^= (state >> 12);
-      state ^= (state << 25);
-      state ^= (state >> 27);
-      return state * 2685821657736338717ULL;
-
+    state ^= (state >> 12);
+    state ^= (state << 25);
+    state ^= (state >> 27);
+    return state * 2685821657736338717ULL;
   };
 
-  constexpr uint64_t sparse() {
-      return next() & next() & next();
-  }
+  constexpr uint64_t sparse() { return next() & next() & next(); }
 };
-}
+} // namespace citterfish
