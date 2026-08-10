@@ -4,7 +4,7 @@
 #include <array>
 
 namespace citterfish {
-struct Magic {
+struct alignas(32) Magic {
   Bitboard mask;
   uint64_t magic;
   uint32_t idx;

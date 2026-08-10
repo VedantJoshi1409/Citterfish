@@ -13,6 +13,7 @@ namespace citterfish {
 class Board {
 
 private:
+  // updated
   std::array<std::array<Bitboard, 6>, 2> pieces;
   std::array<Bitboard, 2> occupied;
   uint8_t castlingRights; // First digit is K then Q then k then q
@@ -21,6 +22,10 @@ private:
   uint16_t halfmoveClock;
   uint16_t fullmoveClock;
   Key zobristHash;
+
+  // refreshed
+  Bitboard checkers;
+  Bitboard pinnedPieces;
 
 public:
   Board(const std::string &fen);
@@ -37,6 +42,25 @@ public:
   uint16_t getFullmoveClock() const { return fullmoveClock; }
   Key getZobristHash() const { return zobristHash; }
   Bitboard getOccupied(Color color) const { return occupied[color]; }
+
+  template <Color us> void refreshChecksAndPins() {
+    Color them = (us == WHITE) ? BLACK : WHITE;
+    Direction D = (us == WHITE) ? SOUTH : NORTH;
+    Bitboard occupeid = getOccupied(us) | getOccupied(them);
+    Bitboard king = getPieces(us, king);
+    Square kingSquare = static_cast<Square>(std::popcount(king));
+
+    // Get all knight checkers
+    Bitboard checkers =
+        attacks::getKnightAttacks(kingSquare) & getPieces(them, KNIGHT);
+
+    // Get all pawn checkers
+    checkers |= attacks::getKingAttacks(kingSquare) & (king << (D + EAST)) &
+                (king << (D + WEST)) & getPieces(them, PAWN);
+
+    Bitboard kingRookRay =
+        attacks::getSlidingAttacks<ROOK>(kingSquare, occupied);
+  }
 
   std::array<std::array<std::string, 8>, 8> toStringBoard() const {
     std::array<std::array<std::string, 8>, 8> stringBoard;
