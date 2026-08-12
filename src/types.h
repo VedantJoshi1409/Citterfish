@@ -7,6 +7,7 @@
 
 namespace citterfish {
 
+using Key = std::uint64_t;
 using Bitboard = std::uint64_t;
 inline void printBB(Bitboard bb) {
   std::cout << "\nBitboard: " << bb << std::endl;
@@ -18,12 +19,10 @@ inline void printBB(Bitboard bb) {
     std::cout << std::endl;
   }
 }
-
-using Key = std::uint64_t;
+constexpr Bitboard ALL_SQUARES = 0xFFFFFFFFFFFFFFFFULL;
 
 enum Color : uint8_t { WHITE, BLACK, BAD_COLOR };
 enum Piece : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, BAD_PIECE };
-
 inline char pieceToChar(Piece piece, Color color) {
   switch (piece) {
   case PAWN:
@@ -42,7 +41,6 @@ inline char pieceToChar(Piece piece, Color color) {
     return '?'; // Should never happen
   }
 }
-
 inline Color charToColor(char c) {
   if (std::islower(c))
     return BLACK;
@@ -50,7 +48,6 @@ inline Color charToColor(char c) {
     return WHITE;
   return BAD_COLOR;
 }
-
 inline Piece charToPiece(char c) {
   switch (std::tolower(c)) {
   case 'p':
@@ -91,7 +88,6 @@ enum Square : std::uint8_t {
     none
 };
 // clang-format on
-
 inline Square squareFromString(const std::string &square) {
   if (square.length() != 2) {
     return none;
@@ -105,7 +101,6 @@ inline Square squareFromString(const std::string &square) {
   int rank = rankChar - '1';
   return static_cast<Square>(rank * 8 + file);
 }
-
 inline std::string squareToString(Square square) {
   if (square == 64) {
     return "-";
@@ -116,19 +111,15 @@ inline std::string squareToString(Square square) {
   char rankChar = '1' + rank;
   return std::string{fileChar, rankChar};
 }
-
 inline Square &operator++(Square &square) {
   square = static_cast<Square>(static_cast<int>(square) + 1);
   return square;
 }
-
 enum Direction : int8_t { NORTH = 8, SOUTH = -8, EAST = 1, WEST = -1 };
-
 constexpr Square operator+(Square square, Direction direction) {
   return static_cast<Square>(static_cast<int>(square) +
                              static_cast<int>(direction));
 }
-
 constexpr Square operator-(Square square, Direction direction) {
   return static_cast<Square>(static_cast<int>(square) -
                              static_cast<int>(direction));
@@ -156,7 +147,6 @@ enum Ranks : Bitboard {
 };
 
 enum MoveType : uint8_t { REGULAR, ENPASSANT, CASTLE, PROMOTION };
-
 class Move {
 private:
   uint16_t moveData;
@@ -186,7 +176,6 @@ public:
     return static_cast<Piece>(((moveData >> 12) & 0x03) + 1);
   }
 };
-
 constexpr uint8_t MAX_MOVES = 224;
 
 constexpr uint32_t ROOK_TABLE_SIZE = 88024;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "attacks.h"
 #include <array>
 #include <bit>
 #include <cstdint>
@@ -46,8 +47,8 @@ public:
   template <Color us> void refreshChecksAndPins() {
     Color them = (us == WHITE) ? BLACK : WHITE;
     Direction D = (us == WHITE) ? SOUTH : NORTH;
-    Bitboard occupeid = getOccupied(us) | getOccupied(them);
-    Bitboard king = getPieces(us, king);
+    Bitboard occupied = getOccupied(us) | getOccupied(them);
+    Bitboard king = getPieces(us, KING);
     Square kingSquare = static_cast<Square>(std::popcount(king));
 
     // Get all knight checkers

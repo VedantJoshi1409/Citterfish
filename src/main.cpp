@@ -2,13 +2,14 @@
 #include "board.h"
 #include "movegen.h"
 #include "zobrist.h"
+#include "attacks.h"
 #include <iostream>
 
 int main() {
   using namespace citterfish;
   zobrist::initializeZobristKeys();
   attacks::initializeAttacks();
-
+  printBB(attacks::getFromToBitboard(e4, b1));
   // Board board;
   // std::cout << board << std::endl;
 

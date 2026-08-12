@@ -79,11 +79,67 @@ void initializeKingAttacks() {
     detail::kingAttacks[static_cast<int>(square)] = attacks;
   }
 }
+
+void initializeFromToBitboards() {
+  for (int fromSquare = 0; fromSquare < 64; ++fromSquare) {
+    int r = fromSquare / 8;
+    int f = fromSquare % 8;
+    Bitboard bb = 0;
+    for (int i = r; i < 8; i++) {
+      int toSquare = i * 8 + f;
+      bb |= 1ULL << toSquare;
+      detail::fromToBitboards[fromSquare][toSquare] = bb;
+    }
+    bb = 0;
+    for (int i = r; i >= 0; i--) {
+      int toSquare = i * 8 + f;
+      bb |= 1ULL << toSquare;
+      detail::fromToBitboards[fromSquare][toSquare] = bb;
+    }
+    bb = 0;
+    for (int i = f; i < 8; i++) {
+      int toSquare = r * 8 + i;
+      bb |= 1ULL << toSquare;
+      detail::fromToBitboards[fromSquare][toSquare] = bb;
+    }
+    bb = 0;
+    for (int i = f; i >= 0; i--) {
+      int toSquare = r * 8 + i;
+      bb |= 1ULL << toSquare;
+      detail::fromToBitboards[fromSquare][toSquare] = bb;
+    }
+    bb = 0;
+    for (int i = r, j = f; i < 8 && j < 8; i++, j++) {
+      int toSquare = i * 8 + j;
+      bb |= 1ULL << toSquare;
+      detail::fromToBitboards[fromSquare][toSquare] = bb;
+    }
+    bb = 0;
+    for (int i = r, j = f; i >= 0 && j >= 0; i--, j--) {
+      int toSquare = i * 8 + j;
+      bb |= 1ULL << toSquare;
+      detail::fromToBitboards[fromSquare][toSquare] = bb;
+    }
+    bb = 0;
+    for (int i = r, j = f; i < 8 && j >= 0; i++, j--) {
+      int toSquare = i * 8 + j;
+      bb |= 1ULL << toSquare;
+      detail::fromToBitboards[fromSquare][toSquare] = bb;
+    }
+    bb = 0;
+    for (int i = r, j = f; i >= 0 && j < 8; i--, j++) {
+      int toSquare = i * 8 + j;
+      bb |= 1ULL << toSquare;
+      detail::fromToBitboards[fromSquare][toSquare] = bb;
+    }
+  }
+}
 } // namespace
 
 void initializeAttacks() {
   initializeKnightAttacks();
   initializeKingAttacks();
+  initializeFromToBitboards();
   fillAttackMap<ROOK>();
   fillAttackMap<BISHOP>();
 }
