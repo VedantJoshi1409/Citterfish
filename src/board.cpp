@@ -6,9 +6,8 @@
 #include <string>
 
 namespace citterfish {
-Board::Board(const std::string &fen)
-    : pieces{}, castlingRights(0), zobristHash(0), halfmoveClock(0),
-      fullmoveClock(0) {
+Board::Board(const std::string &fen) {
+  pieceMap.fill(NO_PIECE_TYPE);
   uint8_t index = 56;
   int i = 0;
   for (; i < fen.length() && fen.at(i) != ' '; i++) {
@@ -20,17 +19,13 @@ Board::Board(const std::string &fen)
     if ('0' <= c && c <= '9') { // skip squares
       index += (c - '0');
     } else {
-      pieces[charToColor(c)][charToPiece(c)] |= 1ULL << index;
-      zobristHash ^= zobrist::getPieceKey(charToColor(c), charToPiece(c),
-                                          static_cast<Square>(index));
+      pieceMap[index] = pieceToPieceType(charToPiece(c), charToColor(c));
       ++index;
     }
   }
   whiteToMove = fen.at(i + 1) == 'w';
-  if (whiteToMove) {
-    zobristHash ^= zobrist::getSideToMoveKey();
-  }
   i += 3;
+  castlingRights = 0;
   for (; i < fen.length() && fen.at(i) != ' '; i++) {
     switch (fen.at(i)) {
     case 'K':
@@ -47,17 +42,43 @@ Board::Board(const std::string &fen)
       break;
     }
   }
-  zobristHash ^= zobrist::getCastlingKey(castlingRights);
-  if (fen.at(i + 1) == '-') {
-    enPassantSquare = 0;
-  } else {
-    enPassantSquare = 1ULL << squareFromString(fen.substr(i + 1, 2));
-    zobristHash ^= zobrist::getEnPassantKey(
-        static_cast<Square>(std::countr_zero(enPassantSquare)));
-  }
+  enPassantSquare = (fen.at(i + 1) == '-') ? no_square : squareFromString(fen.substr(i + 1, 2));
   halfmoveClock = fen.at(i + 3) - '0';
   fullmoveClock = fen.at(i + 5) - '0';
+  refreshBitboards();
+  refreshZobristKey();
+}
 
+Board::Board()
+    : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {}
+
+void Board::refreshPieceMap() {
+  pieceMap.fill(NO_PIECE_TYPE);
+  for (Color color : {WHITE, BLACK}) {
+    for (Piece piece : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
+      Bitboard bitboard = pieces[color][piece];
+      while (bitboard) {
+        int square = std::countr_zero(bitboard);
+        pieceMap[square] = pieceToPieceType(piece, color);
+        bitboard &= bitboard - 1; // Clear lsb
+      }
+    }
+  }
+}
+
+void Board::refreshBitboards() {
+  for (auto& row : pieces) {
+    for (auto& x : row) {
+      x = 0;
+    }
+  }
+  for (Square square = a1; square <= h8; ++square) {
+    if (pieceMap[square] != NO_PIECE_TYPE) {
+    Piece piece = pieceTypeToPiece(pieceMap[square]);
+    Color color = pieceTypeToColor(pieceMap[square]);
+    pieces[color][piece] |= 1ULL << square;
+    }
+  }
   occupied[WHITE] = pieces[WHITE][PAWN] | pieces[WHITE][KNIGHT] |
                     pieces[WHITE][BISHOP] | pieces[WHITE][ROOK] |
                     pieces[WHITE][QUEEN] | pieces[WHITE][KING];
@@ -66,17 +87,79 @@ Board::Board(const std::string &fen)
                     pieces[BLACK][QUEEN] | pieces[BLACK][KING];
 }
 
-Board::Board()
-    : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {}
+void Board::refreshZobristKey() {
+  zobristHash = 0;
+  for (Square square = a1; square <= h8; ++square) {
+    if (pieceMap[square] != NO_PIECE_TYPE) {
+    Piece piece = pieceTypeToPiece(pieceMap[square]);
+    Color color = pieceTypeToColor(pieceMap[square]);
+    zobristHash ^= zobrist::getPieceKey(color, piece, square);
+    }
+  }
+  zobristHash ^= zobrist::getSideToMoveKey(whiteToMove ? WHITE : BLACK);
+  zobristHash ^= zobrist::getEnPassantKey(enPassantSquare);
+  zobristHash ^= zobrist::getCastlingKey(castlingRights);
+
+}
+
+std::string Board::toFen() const {
+  std::string fen;
+  for (int row = 7; row >= 0; --row) {
+    int emptyCount = 0;
+    for (int col = 0; col < 8; ++col) {
+      int square = row*8+col;
+      if (pieceMap[square] == NO_PIECE_TYPE) {
+        ++emptyCount;
+      } else {
+        if (emptyCount > 0) {
+          fen += std::to_string(emptyCount);
+          emptyCount = 0;
+        }
+        fen += pieceTypeToChar(pieceMap[square]);
+      }
+    }
+    if (emptyCount > 0) {
+      fen += std::to_string(emptyCount);
+    }
+    if (row > 0) {
+      fen += '/';
+    }
+  }
+  fen += ' ';
+  fen += (whiteToMove ? 'w' : 'b');
+  fen += ' ';
+  if (castlingRights == 0) {
+    fen += '-';
+  } else {
+    if (castlingRights & WhiteKingSide)
+      fen += 'K';
+    if (castlingRights & WhiteQueenSide)
+      fen += 'Q';
+    if (castlingRights & BlackKingSide)
+      fen += 'k';
+    if (castlingRights & BlackQueenSide)
+      fen += 'q';
+  }
+  fen += ' ';
+  fen +=
+      squareToString(enPassantSquare);
+  fen += ' ';
+  fen += std::to_string(halfmoveClock);
+  fen += ' ';
+  fen += std::to_string(fullmoveClock);
+  return fen;
+}
+
+
 
 std::ostream &operator<<(std::ostream &os, const Board &b) {
-  auto stringBoard = b.toStringBoard();
   constexpr std::string_view separator = "+---+---+---+---+---+---+---+---+\n";
   std::string output{separator};
-  for (const auto &row : std::views::reverse(stringBoard)) {
+  for (int r = 7; r >= 0; r--) {
     output += "| ";
-    for (const auto &square : row) {
-      output += square == "" ? " " : square;
+    for (int c = 0; c < 8; c++) {
+      Square square = static_cast<Square>(r*8+c);
+      output += b.getPieceFromMap(square) == NO_PIECE_TYPE ? ' ' : pieceTypeToChar(b.getPieceFromMap(square));
       output += " | ";
     }
     output += "\n" + std::string(separator);
@@ -97,7 +180,7 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
   output += "Castle rights: " + castle + "\n";
   output += "En passant square: " +
             squareToString(
-                static_cast<Square>(std::countr_zero(b.getEnPassantSquare()))) +
+                static_cast<Square>(b.getEnPassantSquare())) +
             std::string("\n");
   output += "Halfmove clock: " + std::to_string(b.getHalfmoveClock()) + "\n";
   output += "Fullmove clock: " + std::to_string(b.getFullmoveClock()) + "\n";

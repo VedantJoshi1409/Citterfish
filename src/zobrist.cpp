@@ -15,10 +15,12 @@ bool initializeZobristKeys(uint64_t seed) {
   for (auto &key : detail::castlingKeys) {
     key = rng.next();
   }
-  for (auto &key : detail::enPassantKeys) {
-    key = rng.next();
+  for (Square square = a1; square <= h8; ++square) {
+    detail::enPassantKeys[square] = rng.next();
   }
-  detail::sideToMoveKey = rng.next();
+  detail::enPassantKeys[no_square] = 0;
+  detail::sideToMoveKey[WHITE] = rng.next();
+  detail::sideToMoveKey[BLACK] = 0;
   return true;
 }
 } // namespace citterfish::zobrist

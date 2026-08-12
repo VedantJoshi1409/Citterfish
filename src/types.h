@@ -23,6 +23,7 @@ constexpr Bitboard ALL_SQUARES = 0xFFFFFFFFFFFFFFFFULL;
 
 enum Color : uint8_t { WHITE, BLACK, BAD_COLOR };
 enum Piece : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, BAD_PIECE };
+enum PieceType : uint8_t { W_PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING, B_PAWN, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING, NO_PIECE_TYPE};
 inline char pieceToChar(Piece piece, Color color) {
   switch (piece) {
   case PAWN:
@@ -40,6 +41,15 @@ inline char pieceToChar(Piece piece, Color color) {
   default:
     return '?'; // Should never happen
   }
+}
+inline Color pieceTypeToColor(PieceType pt) {
+  return static_cast<Color>(pt/6);
+}
+inline Piece pieceTypeToPiece(PieceType pt) {
+  return static_cast<Piece>(pt%6);
+}
+inline char pieceTypeToChar(PieceType pieceType) {
+  return pieceToChar(pieceTypeToPiece(pieceType), pieceTypeToColor(pieceType));
 }
 inline Color charToColor(char c) {
   if (std::islower(c))
@@ -65,6 +75,9 @@ inline Piece charToPiece(char c) {
   }
   return BAD_PIECE;
 }
+inline PieceType pieceToPieceType(Piece piece, Color color) {
+  return static_cast<PieceType>(color*6+piece);
+}
 
 enum CastlingRight : uint8_t {
   None = 0,
@@ -85,17 +98,17 @@ enum Square : std::uint8_t {
     a7, b7, c7, d7, e7, f7, g7, h7,
     a8, b8, c8, d8, e8, f8, g8, h8,
 
-    none
+    no_square
 };
 // clang-format on
 inline Square squareFromString(const std::string &square) {
   if (square.length() != 2) {
-    return none;
+    return no_square;
   }
   char fileChar = square.at(0);
   char rankChar = square.at(1);
   if (fileChar < 'a' || fileChar > 'h' || rankChar < '1' || rankChar > '8') {
-    return none;
+    return no_square;
   }
   int file = fileChar - 'a';
   int rank = rankChar - '1';

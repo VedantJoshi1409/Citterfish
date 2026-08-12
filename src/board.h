@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "attacks.h"
+#include "zobrist.h"
 #include <array>
 #include <bit>
 #include <cstdint>
@@ -19,10 +20,11 @@ private:
   std::array<Bitboard, 2> occupied;
   uint8_t castlingRights; // First digit is K then Q then k then q
   bool whiteToMove;
-  Bitboard enPassantSquare;
+  Square enPassantSquare;
   uint16_t halfmoveClock;
   uint16_t fullmoveClock;
   Key zobristHash;
+  std::array<PieceType, 64> pieceMap;
 
   // refreshed
   Bitboard checkers;
@@ -35,10 +37,12 @@ public:
   Bitboard getPieces(Color color, Piece piece) const {
     return pieces[color][piece];
   }
-
+  PieceType getPieceFromMap(Square square) const {
+    return pieceMap[square];
+  }
   bool getWhiteToMove() const { return whiteToMove; }
   uint8_t getCastlingRights() const { return castlingRights; }
-  Bitboard getEnPassantSquare() const { return enPassantSquare; }
+  Square getEnPassantSquare() const { return enPassantSquare; }
   uint16_t getHalfmoveClock() const { return halfmoveClock; }
   uint16_t getFullmoveClock() const { return fullmoveClock; }
   Key getZobristHash() const { return zobristHash; }
@@ -63,72 +67,12 @@ public:
         attacks::getSlidingAttacks<ROOK>(kingSquare, occupied);
   }
 
-  std::array<std::array<std::string, 8>, 8> toStringBoard() const {
-    std::array<std::array<std::string, 8>, 8> stringBoard;
-    for (Color color : {WHITE, BLACK}) {
-      for (Piece piece : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
-        Bitboard bitboard = pieces[color][piece];
-        while (bitboard) {
-          int square = std::countr_zero(bitboard);
-          int row = square / 8;
-          int col = square % 8;
-          stringBoard[row][col] = std::string(1, pieceToChar(piece, color));
-          bitboard &= bitboard - 1; // Clear lsb
-        }
-      }
-    }
-    return stringBoard;
-  }
-
-  std::string toFen() const {
-    std::string fen;
-    auto stringBoard = toStringBoard();
-    for (int row = 7; row >= 0; --row) {
-      int emptyCount = 0;
-      for (int col = 0; col < 8; ++col) {
-        const std::string &square = stringBoard[row][col];
-        if (square.empty()) {
-          ++emptyCount;
-        } else {
-          if (emptyCount > 0) {
-            fen += std::to_string(emptyCount);
-            emptyCount = 0;
-          }
-          fen += square;
-        }
-      }
-      if (emptyCount > 0) {
-        fen += std::to_string(emptyCount);
-      }
-      if (row > 0) {
-        fen += '/';
-      }
-    }
-    fen += ' ';
-    fen += (whiteToMove ? 'w' : 'b');
-    fen += ' ';
-    if (castlingRights == 0) {
-      fen += '-';
-    } else {
-      if (castlingRights & WhiteKingSide)
-        fen += 'K';
-      if (castlingRights & WhiteQueenSide)
-        fen += 'Q';
-      if (castlingRights & BlackKingSide)
-        fen += 'k';
-      if (castlingRights & BlackQueenSide)
-        fen += 'q';
-    }
-    fen += ' ';
-    fen +=
-        squareToString(static_cast<Square>(std::countr_zero(enPassantSquare)));
-    fen += ' ';
-    fen += std::to_string(halfmoveClock);
-    fen += ' ';
-    fen += std::to_string(fullmoveClock);
-    return fen;
-  }
+  void refreshPieceMap(); 
+  void refreshBitboards();
+  void refreshZobristKey(); 
+  std::string toFen() const;
 };
 
 std::ostream &operator<<(std::ostream &os, const Board &b);
+
 } // namespace citterfish

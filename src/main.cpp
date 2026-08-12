@@ -9,9 +9,8 @@ int main() {
   using namespace citterfish;
   zobrist::initializeZobristKeys();
   attacks::initializeAttacks();
-  printBB(attacks::getFromToBitboard(e4, b1));
-  // Board board;
-  // std::cout << board << std::endl;
+  Board board;
+  std::cout << board << std::endl;
 
   // MoveList moveList;
   // generateMoves(board, moveList);
