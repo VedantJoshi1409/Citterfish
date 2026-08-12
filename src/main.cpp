@@ -11,7 +11,6 @@ int main() {
   attacks::initializeAttacks();
   Board board;
   std::cout << board << std::endl;
-
   // MoveList moveList;
   // generateMoves(board, moveList);
   // std::cout << static_cast<uint16_t>(moveList.count) << " moves generated."

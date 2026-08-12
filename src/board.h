@@ -49,22 +49,29 @@ public:
   Bitboard getOccupied(Color color) const { return occupied[color]; }
 
   template <Color us> void refreshChecksAndPins() {
-    Color them = (us == WHITE) ? BLACK : WHITE;
-    Direction D = (us == WHITE) ? SOUTH : NORTH;
-    Bitboard occupied = getOccupied(us) | getOccupied(them);
+    constexpr Color them = (us == WHITE) ? BLACK : WHITE;
+    constexpr Direction D = (us == WHITE) ? SOUTH : NORTH;
+    Bitboard allOccupied = getOccupied(us) | getOccupied(them);
     Bitboard king = getPieces(us, KING);
     Square kingSquare = static_cast<Square>(std::popcount(king));
 
     // Get all knight checkers
-    Bitboard checkers =
+    Bitboard curCheckers =
         attacks::getKnightAttacks(kingSquare) & getPieces(them, KNIGHT);
 
-    // Get all pawn checkers
-    checkers |= attacks::getKingAttacks(kingSquare) & (king << (D + EAST)) &
-                (king << (D + WEST)) & getPieces(them, PAWN);
 
-    Bitboard kingRookRay =
-        attacks::getSlidingAttacks<ROOK>(kingSquare, occupied);
+    // Get all pawn checkers
+    curCheckers |= attacks::getKingAttacks(kingSquare) & ((king << (D + EAST)) |
+                (king << (D + WEST))) & getPieces(them, PAWN);
+
+    Bitboard kingRookRay = attacks::getSlidingAttacks<ROOK>(kingSquare, getOccupied(them));
+    Bitboard kingStraightAttackers = kingRookRay & (getPieces(them, ROOK) | getPieces(them, QUEEN));
+    while (kingStraightAttackers) {
+      Square attacker = static_cast<Square>(std::countr_zero(kingStraightAttackers));
+      
+
+    }
+  
   }
 
   void refreshPieceMap(); 
