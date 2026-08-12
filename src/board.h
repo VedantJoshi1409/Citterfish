@@ -34,6 +34,10 @@ public:
   Board(const std::string &fen);
   Board();
 
+  template <Piece P>
+  Bitboard getPieces(Color color) const {
+    return pieces[color][P];
+  }
   Bitboard getPieces(Color color, Piece piece) const {
     return pieces[color][piece];
   }
@@ -64,11 +68,12 @@ public:
     curCheckers |= attacks::getKingAttacks(kingSquare) & ((king << (D + EAST)) |
                 (king << (D + WEST))) & getPieces(them, PAWN);
 
-    Bitboard kingRookRay = attacks::getSlidingAttacks<ROOK>(kingSquare, getOccupied(them));
-    Bitboard kingStraightAttackers = kingRookRay & (getPieces(them, ROOK) | getPieces(them, QUEEN));
-    while (kingStraightAttackers) {
-      Square attacker = static_cast<Square>(std::countr_zero(kingStraightAttackers));
-      
+    Bitboard kingOrtho = attacks::getSlidingAttacks<ROOK>(kingSquare, getOccupied(them)); //Where the king can be orthogonally attacked from 
+    Bitboard kingDiag = attacks::getSlidingAttacks<BISHOP>(kingSquare, getOccupied(them)); //Where the king can be diagonally attacked from
+    Bitboard kingAttackers = (kingOrtho & (getPieces(them, ROOK) | getPieces(them, QUEEN))) | (kingDiag & (getPieces(them, BISHOP) | getPieces(them, QUEEN))); 
+    while (kingAttackers) {
+      Square attacker = static_cast<Square>(std::countr_zero(kingAttackers));
+      //Bitboard blockers =
 
     }
   
