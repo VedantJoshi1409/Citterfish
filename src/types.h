@@ -131,6 +131,9 @@ inline Square &operator++(Square &square) {
   square = static_cast<Square>(static_cast<int>(square) + 1);
   return square;
 }
+inline Square getLeastSquare(Bitboard bb) {
+  return static_cast<Square>(std::countr_zero(bb));
+}
 enum Direction : int8_t { NORTH = 8, SOUTH = -8, EAST = 1, WEST = -1 };
 constexpr Square operator+(Square square, Direction direction) {
   return static_cast<Square>(static_cast<int>(square) +
