@@ -2,7 +2,6 @@
 #include "board.h"
 #include "movegen.h"
 #include "zobrist.h"
-#include "attacks.h"
 #include <iostream>
 
 int main() {

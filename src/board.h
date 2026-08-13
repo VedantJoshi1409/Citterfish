@@ -1,7 +1,7 @@
 #pragma once
 
-#include "types.h"
 #include "attacks.h"
+#include "types.h"
 #include "zobrist.h"
 #include <array>
 #include <bit>
@@ -34,16 +34,13 @@ public:
   Board(const std::string &fen);
   Board();
 
-  template <Piece P>
-  Bitboard getPieces(Color color) const {
+  template <Piece P> Bitboard getPieces(Color color) const {
     return pieces[color][P];
   }
   Bitboard getPieces(Color color, Piece piece) const {
     return pieces[color][piece];
   }
-  PieceType getPieceFromMap(Square square) const {
-    return pieceMap[square];
-  }
+  PieceType getPieceFromMap(Square square) const { return pieceMap[square]; }
   bool getWhiteToMove() const { return whiteToMove; }
   uint8_t getCastlingRights() const { return castlingRights; }
   Square getEnPassantSquare() const { return enPassantSquare; }
@@ -56,32 +53,36 @@ public:
     constexpr Color them = (us == WHITE) ? BLACK : WHITE;
     constexpr Direction D = (us == WHITE) ? SOUTH : NORTH;
     Bitboard allOccupied = getOccupied(us) | getOccupied(them);
-    Bitboard king = getPieces(us, KING);
+    Bitboard king = getPieces<KING>(us);
     Square kingSquare = static_cast<Square>(std::popcount(king));
 
     // Get all knight checkers
     Bitboard curCheckers =
-        attacks::getKnightAttacks(kingSquare) & getPieces(them, KNIGHT);
-
+        attacks::getKnightAttacks(kingSquare) & getPieces<KNIGHT>(them);
 
     // Get all pawn checkers
-    curCheckers |= attacks::getKingAttacks(kingSquare) & ((king << (D + EAST)) |
-                (king << (D + WEST))) & getPieces(them, PAWN);
+    curCheckers |= attacks::getKingAttacks(kingSquare) &
+                   ((king << (D + EAST)) | (king << (D + WEST))) &
+                   getPieces<PAWN>(them);
 
-    Bitboard kingOrtho = attacks::getSlidingAttacks<ROOK>(kingSquare, getOccupied(them)); //Where the king can be orthogonally attacked from 
-    Bitboard kingDiag = attacks::getSlidingAttacks<BISHOP>(kingSquare, getOccupied(them)); //Where the king can be diagonally attacked from
-    Bitboard kingAttackers = (kingOrtho & (getPieces(them, ROOK) | getPieces(them, QUEEN))) | (kingDiag & (getPieces(them, BISHOP) | getPieces(them, QUEEN))); 
+    Bitboard kingOrtho = attacks::getSlidingAttacks<ROOK>(
+        kingSquare,
+        getOccupied(them)); // Where the king can be orthogonally attacked from
+    Bitboard kingDiag = attacks::getSlidingAttacks<BISHOP>(
+        kingSquare,
+        getOccupied(them)); // Where the king can be diagonally attacked from
+    Bitboard kingAttackers =
+        (kingOrtho & (getPieces<ROOK>(them) | getPieces<QUEEN>(them))) |
+        (kingDiag & (getPieces<BISHOP>(them) | getPieces<QUEEN>(them)));
     while (kingAttackers) {
       Square attacker = static_cast<Square>(std::countr_zero(kingAttackers));
-      //Bitboard blockers =
-
+      Bitboard blockers = attacks::getFromToBitboard(kingSquare, attacker);
     }
-  
   }
 
-  void refreshPieceMap(); 
+  void refreshPieceMap();
   void refreshBitboards();
-  void refreshZobristKey(); 
+  void refreshZobristKey();
   std::string toFen() const;
 };
 
