@@ -18,6 +18,7 @@ private:
   // updated
   std::array<std::array<Bitboard, 6>, 2> pieces;
   std::array<Bitboard, 2> occupied;
+  Bitboard allOccupied;
   uint8_t castlingRights; // First digit is K then Q then k then q
   bool whiteToMove;
   Square enPassantSquare;
@@ -49,6 +50,7 @@ public:
   uint16_t getFullmoveClock() const { return fullmoveClock; }
   Key getZobristHash() const { return zobristHash; }
   Bitboard getOccupied(Color color) const { return occupied[color]; }
+  Bitboard getOccupied() const { return allOccupied; }
   Bitboard getCheckers() const { return checkers; }
   Bitboard getPinned() const { return pinnedPieces; }
   Bitboard getPinners() const { return pinners; }
@@ -56,7 +58,6 @@ public:
   template <Color us> void refreshChecksAndPins() {
     constexpr Color them = ~us;
     constexpr Direction D = (us == WHITE) ? SOUTH : NORTH;
-    Bitboard allOccupied = getOccupied(us) | getOccupied(them);
     Square kingSquare = static_cast<Square>(std::countr_zero(getPieces<KING>(us)));
     // Get all knight checkers
     Bitboard curCheckers =

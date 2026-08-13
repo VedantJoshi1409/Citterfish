@@ -7,8 +7,9 @@ namespace citterfish {
 template <Direction D>
 void generatePawnMoves(Bitboard pawns, Bitboard enemyOccupied,
                        Bitboard occupied, MoveList &moveList) {
-  Bitboard pawnsBelow7 = pawns & ~(D == NORTH ? RANK_7 : RANK_2);
-  Bitboard pawnsOn7 = pawns & (D == NORTH ? RANK_7 : RANK_2);
+  constexpr Bitboard filesOn7 = D == NORTH ? RANK_7 : RANK_2;
+  Bitboard pawnsBelow7 = pawns & ~filesOn7;
+  Bitboard pawnsOn7 = pawns & filesOn7;
   Bitboard bb = (pawnsBelow7 << D) & ~occupied; // Generate single pawn push
   while (bb) {
     Square to = static_cast<Square>(std::countr_zero(bb));
@@ -109,7 +110,8 @@ void generateKingMoves(Bitboard king, Bitboard friendlyOccupied,
 
 template <Color C>
 void generatePinnedMoves(Board &b, MoveList &moveList) {
-  Direction D = (C == WHITE) ? NORTH : SOUTH;
+  constexpr Direction D = (C == WHITE) ? NORTH : SOUTH;
+  constexpr bool isWhite = C == WHITE;
   Bitboard pinners = b.getPinners();
   Square kingSquare = static_cast<Square>(std::countr_zero(b.getPieces<KING>(C)));
     while (pinners) { //get all pinned piece moves
@@ -123,11 +125,11 @@ void generatePinnedMoves(Board &b, MoveList &moveList) {
         Bitboard pawnBB = 1ULL << pinnedPiece;
         Bitboard pawnMoves = ((pawnBB << (D + EAST)) | (pawnBB << (D + WEST))) & attacker; //attacking squares
         pawnMoves |= pawnBB << D;
-        if ((pawnBB & ((C == WHITE) ? RANK_2 : RANK_7)) != 0) pawnMoves |= pawnBB << 2*D;
+        if ((pawnBB & (isWhite ? RANK_2 : RANK_7)) != 0) pawnMoves |= pawnBB << 2*D;
         pawnMoves &= pinRay; //only keep moves along pin ray
         while (pawnMoves) {
           Square toSquare = static_cast<Square>(std::countr_zero(pawnMoves));
-          if ((pawnBB & ((C == WHITE) ? RANK_7 : RANK_2)) != 0) { //promoting
+          if ((pawnBB & (isWhite ? RANK_7 : RANK_2)) != 0) { //promoting
             moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, QUEEN));
             moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, KNIGHT));
             moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, ROOK));
@@ -162,10 +164,48 @@ void generatePinnedMoves(Board &b, MoveList &moveList) {
     }
 }
 
+//generates the attack mask for all squares attacked by pieces
+template <Color C>
+Bitboard generateAttackMask(Board &b) {
+  constexpr Direction D = C == WHITE ? NORTH : SOUTH;
+  Bitboard mask = 0;
+  Bitboard cur = b.getPieces<PAWN>(C);
+  mask |= (cur & ~FILE_A) << (D+WEST);
+  mask |= (cur & ~FILE_H) << (D+EAST);
+  
+  cur = b.getPieces<KNIGHT>(C);
+  while (cur) {
+    mask |= attacks::getKnightAttacks(static_cast<Square>(std::countr_zero(cur)));
+    cur &= cur-1;
+  }
+
+  cur = b.getPieces<BISHOP>(C);
+  while (cur) {
+    mask |= attacks::getSlidingAttacks<BISHOP>(static_cast<Square>(std::countr_zero(cur)), b.getOccupied());
+    cur &= cur-1;
+  }
+
+  cur = b.getPieces<ROOK>(C);
+  while (cur) {
+    mask |= attacks::getSlidingAttacks<ROOK>(static_cast<Square>(std::countr_zero(cur)), b.getOccupied());
+    cur &= cur-1;
+  }
+
+  cur = b.getPieces<QUEEN>(C);
+  while (cur) {
+    mask |= attacks::getSlidingAttacks<QUEEN>(static_cast<Square>(std::countr_zero(cur)), b.getOccupied());
+    cur &= cur-1;
+  }
+
+  mask |= attacks::getKingAttacks(static_cast<Square>(std::countr_zero(b.getPieces<KING>(C))));
+  return mask;
+}
+
 template <Color C>
 void generateMoves(Board &b, MoveList &moveList) {
   moveList.count = 0;
   Square kingSquare = static_cast<Square>(std::countr_zero(b.getPieces<KING>(C)));
+  Bitboard attackedSquares = generateAttackMask<~C>();
   b.refreshChecksAndPins<C>();
   if (b.getCheckers() == 0) { //no checkers
     

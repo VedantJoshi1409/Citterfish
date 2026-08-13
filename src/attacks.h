@@ -14,8 +14,6 @@ inline std::array<std::array<Bitboard, 64>, 64> fromToBitboards{};
 } // namespace detail
 
 void initializeAttacks();
-Bitboard getKnightAttacks(Square square);
-Bitboard getKingAttacks(Square square);
 
 inline Bitboard getKnightAttacks(Square square) {
   return detail::knightAttacks[static_cast<int>(square)];

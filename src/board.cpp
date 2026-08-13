@@ -87,6 +87,7 @@ void Board::refreshBitboards() {
   occupied[BLACK] = pieces[BLACK][PAWN] | pieces[BLACK][KNIGHT] |
                     pieces[BLACK][BISHOP] | pieces[BLACK][ROOK] |
                     pieces[BLACK][QUEEN] | pieces[BLACK][KING];
+  allOccupied = occupied[WHITE] | occupied[BLACK];
 }
 
 void Board::refreshZobristKey() {

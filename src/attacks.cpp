@@ -85,11 +85,11 @@ void initializePawnAttackers() {
     Bitboard w_pawns = 0;
     Bitboard b_pawns = 0;
     Bitboard piece = 1ULL << s;
-    if ((piece & FILE_A) != 0) {
+    if ((piece & FILE_A) == 0) {
       w_pawns |= 1ULL << (s + (SOUTH + WEST)); // wpawns attack from below
       b_pawns |= 1ULL << (s + (NORTH + WEST)); // bpawns attack from above
     }
-    if ((piece & FILE_H) != 0) {
+    if ((piece & FILE_H) == 0) {
       w_pawns |= 1ULL << (s + (SOUTH + EAST)); // wpawns attack from below
       b_pawns |= 1ULL << (s + (NORTH + EAST)); // bpawns attack from above
     }
@@ -129,6 +129,7 @@ void initializeRays() {
 void initializeAttacks() {
   initializeKnightAttacks();
   initializeKingAttacks();
+  initializePawnAttackers();
   initializeFromToBitboards();
   fillAttackMap<ROOK>();
   fillAttackMap<BISHOP>();

@@ -16,6 +16,5 @@ struct MoveList {
 };
 
 void generateMoves(Board &board, MoveList &moveList);
-
 }
 
