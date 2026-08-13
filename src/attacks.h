@@ -8,6 +8,8 @@ namespace detail {
 inline std::array<Bitboard, 64> knightAttacks;
 inline std::array<Bitboard, 64> kingAttacks;
 inline std::array<std::array<Bitboard, 64>, 2> pawnAttackers;
+inline std::array<Bitboard, 64> orthoRays;
+inline std::array<Bitboard, 64> diagRays;
 inline std::array<std::array<Bitboard, 64>, 64> fromToBitboards{};
 } // namespace detail
 
@@ -26,6 +28,10 @@ inline Bitboard getKingAttacks(Square square) {
 template <Color C> inline Bitboard getPawnAttackers(Square square) {
   return detail::pawnAttackers[C][square];
 }
+
+inline Bitboard getOrthoRays(Square s) { return detail::orthoRays[s]; }
+
+inline Bitboard getDiagRays(Square s) { return detail::diagRays[s]; }
 
 inline Bitboard getFromToBitboard(Square from, Square to) {
   return detail::fromToBitboards[static_cast<int>(from)][static_cast<int>(to)];

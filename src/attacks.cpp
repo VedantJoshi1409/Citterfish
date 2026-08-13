@@ -117,6 +117,13 @@ void initializeFromToBitboards() {
     }
   }
 }
+
+void initializeRays() {
+  for (Square s = a1; s <= h8; ++s) {
+    detail::orthoRays[s] = getSlidingAttacks<ROOK>(s, 0);
+    detail::diagRays[s] = getSlidingAttacks<BISHOP>(s, 0);
+  }
+}
 } // namespace
 
 void initializeAttacks() {
@@ -125,6 +132,7 @@ void initializeAttacks() {
   initializeFromToBitboards();
   fillAttackMap<ROOK>();
   fillAttackMap<BISHOP>();
+  initializeRays();
 }
 
 } // namespace citterfish::attacks

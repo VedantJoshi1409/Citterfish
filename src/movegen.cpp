@@ -107,7 +107,74 @@ void generateKingMoves(Bitboard king, Bitboard friendlyOccupied,
   }
 }
 
-void generateMoves(const Board &board, MoveList &moveList) {
+template <Color C>
+void generatePinnedMoves(Board &b, MoveList &moveList) {
+  Direction D = (C == WHITE) ? NORTH : SOUTH;
+  Bitboard pinners = b.getPinners();
+  Square kingSquare = static_cast<Square>(std::countr_zero(b.getPieces<KING>(C)));
+    while (pinners) { //get all pinned piece moves
+      Square attacker = static_cast<Square>(std::countr_zero(pinners));
+      Bitboard pinRay = attacks::getFromToBitboard(kingSquare, attacker) | 1ULL << attacker;
+      Square pinnedPiece = static_cast<Square>(std::countr_zero(pinRay & b.getPinned()));
+
+      Piece piece = pieceTypeToPiece(b.getPieceFromMap(pinnedPiece));
+      if (piece == PAWN) {
+        //Cant enpassant if pinned
+        Bitboard pawnBB = 1ULL << pinnedPiece;
+        Bitboard pawnMoves = ((pawnBB << (D + EAST)) | (pawnBB << (D + WEST))) & attacker; //attacking squares
+        pawnMoves |= pawnBB << D;
+        if ((pawnBB & ((C == WHITE) ? RANK_2 : RANK_7)) != 0) pawnMoves |= pawnBB << 2*D;
+        pawnMoves &= pinRay; //only keep moves along pin ray
+        while (pawnMoves) {
+          Square toSquare = static_cast<Square>(std::countr_zero(pawnMoves));
+          if ((pawnBB & ((C == WHITE) ? RANK_7 : RANK_2)) != 0) { //promoting
+            moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, QUEEN));
+            moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, KNIGHT));
+            moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, ROOK));
+            moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, BISHOP));
+          } else {
+            moveList.addMove(Move(pinnedPiece, toSquare));
+          }
+          pawnMoves &= pawnMoves-1;
+        }
+
+
+      } else {
+        switch (piece) {
+        case BISHOP:
+        pinRay &= attacks::getDiagRays(pinnedPiece);
+        break;
+        case ROOK: 
+        //only can be pinned once rook moves so no castling
+        pinRay &= attacks::getOrthoRays(pinnedPiece);
+        break;
+        case QUEEN:
+        pinRay &= (attacks::getOrthoRays(pinnedPiece) | attacks::getDiagRays(pinnedPiece));
+        break;
+        default:
+        break;
+      }
+      while (pinRay) {
+        moveList.addMove(Move(pinnedPiece, static_cast<Square>(std::countr_zero(pinRay))));
+        pinRay &= pinRay -1;
+      }
+      }
+    }
+}
+
+template <Color C>
+void generateMoves(Board &b, MoveList &moveList) {
   moveList.count = 0;
+  Square kingSquare = static_cast<Square>(std::countr_zero(b.getPieces<KING>(C)));
+  b.refreshChecksAndPins<C>();
+  if (b.getCheckers() == 0) { //no checkers
+    
+    
+
+  } else if ((b.getCheckers() & (b.getCheckers()-1)) == 0) { //one checker
+
+  } else { //two checkers
+    
+  }
 }
 } // namespace citterfish

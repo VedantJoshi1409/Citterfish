@@ -54,12 +54,10 @@ public:
   Bitboard getPinners() const { return pinners; }
 
   template <Color us> void refreshChecksAndPins() {
-    constexpr Color them = (us == WHITE) ? BLACK : WHITE;
+    constexpr Color them = ~us;
     constexpr Direction D = (us == WHITE) ? SOUTH : NORTH;
     Bitboard allOccupied = getOccupied(us) | getOccupied(them);
-    Bitboard king = getPieces<KING>(us);
-    Square kingSquare = static_cast<Square>(std::countr_zero(king));
-
+    Square kingSquare = static_cast<Square>(std::countr_zero(getPieces<KING>(us)));
     // Get all knight checkers
     Bitboard curCheckers =
         attacks::getKnightAttacks(kingSquare) & getPieces<KNIGHT>(them);

@@ -22,6 +22,9 @@ inline void printBB(Bitboard bb) {
 constexpr Bitboard ALL_SQUARES = 0xFFFFFFFFFFFFFFFFULL;
 
 enum Color : uint8_t { WHITE, BLACK, BAD_COLOR };
+inline Color operator~(Color c) {
+  return static_cast<Color>(c^1);
+}
 enum Piece : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, BAD_PIECE };
 enum PieceType : uint8_t { W_PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING, B_PAWN, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING, NO_PIECE_TYPE};
 inline char pieceToChar(Piece piece, Color color) {

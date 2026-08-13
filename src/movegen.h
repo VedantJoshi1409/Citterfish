@@ -15,7 +15,7 @@ struct MoveList {
     }
 };
 
-void generateMoves(const Board &board, MoveList &moveList);
+void generateMoves(Board &board, MoveList &moveList);
 
 }
 
