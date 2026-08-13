@@ -29,6 +29,7 @@ private:
   // refreshed
   Bitboard checkers;
   Bitboard pinnedPieces;
+  Bitboard pinners;
 
 public:
   Board(const std::string &fen);
@@ -48,22 +49,24 @@ public:
   uint16_t getFullmoveClock() const { return fullmoveClock; }
   Key getZobristHash() const { return zobristHash; }
   Bitboard getOccupied(Color color) const { return occupied[color]; }
+  Bitboard getCheckers() const { return checkers; }
+  Bitboard getPinned() const { return pinnedPieces; }
+  Bitboard getPinners() const { return pinners; }
 
   template <Color us> void refreshChecksAndPins() {
     constexpr Color them = (us == WHITE) ? BLACK : WHITE;
     constexpr Direction D = (us == WHITE) ? SOUTH : NORTH;
     Bitboard allOccupied = getOccupied(us) | getOccupied(them);
     Bitboard king = getPieces<KING>(us);
-    Square kingSquare = static_cast<Square>(std::popcount(king));
+    Square kingSquare = static_cast<Square>(std::countr_zero(king));
 
     // Get all knight checkers
     Bitboard curCheckers =
         attacks::getKnightAttacks(kingSquare) & getPieces<KNIGHT>(them);
 
     // Get all pawn checkers
-    curCheckers |= attacks::getKingAttacks(kingSquare) &
-                   ((king << (D + EAST)) | (king << (D + WEST))) &
-                   getPieces<PAWN>(them);
+    curCheckers |=
+        attacks::getPawnAttackers<us>(kingSquare) & getPieces<PAWN>(them);
 
     Bitboard kingOrtho = attacks::getSlidingAttacks<ROOK>(
         kingSquare,
@@ -74,10 +77,23 @@ public:
     Bitboard kingAttackers =
         (kingOrtho & (getPieces<ROOK>(them) | getPieces<QUEEN>(them))) |
         (kingDiag & (getPieces<BISHOP>(them) | getPieces<QUEEN>(them)));
+    Bitboard curPinned = 0;
+    Bitboard curPinners = 0;
     while (kingAttackers) {
       Square attacker = static_cast<Square>(std::countr_zero(kingAttackers));
-      Bitboard blockers = attacks::getFromToBitboard(kingSquare, attacker);
+      Bitboard blockers =
+          attacks::getFromToBitboard(kingSquare, attacker) & getOccupied(us);
+      if (blockers == 0) {
+        curCheckers |= 1ULL << attacker;
+      } else if ((blockers & (blockers - 1)) == 0) {
+        curPinned |= blockers;
+        curPinners |= 1ULL << attacker;
+      }
+      kingAttackers &= kingAttackers - 1;
     }
+    checkers = curCheckers;
+    pinnedPieces = curPinned;
+    pinners = curPinners;
   }
 
   void refreshPieceMap();

@@ -80,6 +80,26 @@ void initializeKingAttacks() {
   }
 }
 
+void initializePawnAttackers() {
+  for (Square s = a1; s <= h8; ++s) {
+    Bitboard w_pawns = 0;
+    Bitboard b_pawns = 0;
+    Bitboard piece = 1ULL << s;
+    if ((piece & FILE_A) != 0) {
+      w_pawns |= 1ULL << (s + (SOUTH + WEST)); // wpawns attack from below
+      b_pawns |= 1ULL << (s + (NORTH + WEST)); // bpawns attack from above
+    }
+    if ((piece & FILE_H) != 0) {
+      w_pawns |= 1ULL << (s + (SOUTH + EAST)); // wpawns attack from below
+      b_pawns |= 1ULL << (s + (NORTH + EAST)); // bpawns attack from above
+    }
+    detail::pawnAttackers[WHITE][s] =
+        b_pawns; // b_pawns attack you if you are white
+    detail::pawnAttackers[BLACK][s] =
+        w_pawns; // w_pawns attack you if you are black
+  }
+}
+
 void initializeFromToBitboards() {
   constexpr int dirs[8][2] = {{1, 0}, {-1, 0},  {0, 1},  {0, -1},
                               {1, 1}, {-1, -1}, {1, -1}, {-1, 1}};

@@ -42,15 +42,17 @@ Board::Board(const std::string &fen) {
       break;
     }
   }
-  enPassantSquare = (fen.at(i + 1) == '-') ? no_square : squareFromString(fen.substr(i + 1, 2));
-  halfmoveClock = fen.at(i + 3) - '0';
-  fullmoveClock = fen.at(i + 5) - '0';
+  enPassantSquare = (fen.at(i + 1) == '-')
+                        ? no_square
+                        : squareFromString(fen.substr(i + 1, 2));
+  halfmoveClock = (i + 3) < fen.size() ? fen.at(i + 3) - '0' : 0;
+  fullmoveClock = (i + 5) < fen.size() ? fen.at(i + 5) - '0' : 0;
   refreshBitboards();
   refreshZobristKey();
 }
 
 Board::Board()
-    : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {}
+    : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -") {}
 
 void Board::refreshPieceMap() {
   pieceMap.fill(NO_PIECE_TYPE);
@@ -67,16 +69,16 @@ void Board::refreshPieceMap() {
 }
 
 void Board::refreshBitboards() {
-  for (auto& row : pieces) {
-    for (auto& x : row) {
+  for (auto &row : pieces) {
+    for (auto &x : row) {
       x = 0;
     }
   }
   for (Square square = a1; square <= h8; ++square) {
     if (pieceMap[square] != NO_PIECE_TYPE) {
-    Piece piece = pieceTypeToPiece(pieceMap[square]);
-    Color color = pieceTypeToColor(pieceMap[square]);
-    pieces[color][piece] |= 1ULL << square;
+      Piece piece = pieceTypeToPiece(pieceMap[square]);
+      Color color = pieceTypeToColor(pieceMap[square]);
+      pieces[color][piece] |= 1ULL << square;
     }
   }
   occupied[WHITE] = pieces[WHITE][PAWN] | pieces[WHITE][KNIGHT] |
@@ -91,15 +93,14 @@ void Board::refreshZobristKey() {
   zobristHash = 0;
   for (Square square = a1; square <= h8; ++square) {
     if (pieceMap[square] != NO_PIECE_TYPE) {
-    Piece piece = pieceTypeToPiece(pieceMap[square]);
-    Color color = pieceTypeToColor(pieceMap[square]);
-    zobristHash ^= zobrist::getPieceKey(color, piece, square);
+      Piece piece = pieceTypeToPiece(pieceMap[square]);
+      Color color = pieceTypeToColor(pieceMap[square]);
+      zobristHash ^= zobrist::getPieceKey(color, piece, square);
     }
   }
   zobristHash ^= zobrist::getSideToMoveKey(whiteToMove ? WHITE : BLACK);
   zobristHash ^= zobrist::getEnPassantKey(enPassantSquare);
   zobristHash ^= zobrist::getCastlingKey(castlingRights);
-
 }
 
 std::string Board::toFen() const {
@@ -107,7 +108,7 @@ std::string Board::toFen() const {
   for (int row = 7; row >= 0; --row) {
     int emptyCount = 0;
     for (int col = 0; col < 8; ++col) {
-      int square = row*8+col;
+      int square = row * 8 + col;
       if (pieceMap[square] == NO_PIECE_TYPE) {
         ++emptyCount;
       } else {
@@ -141,8 +142,7 @@ std::string Board::toFen() const {
       fen += 'q';
   }
   fen += ' ';
-  fen +=
-      squareToString(enPassantSquare);
+  fen += squareToString(enPassantSquare);
   fen += ' ';
   fen += std::to_string(halfmoveClock);
   fen += ' ';
@@ -150,16 +150,16 @@ std::string Board::toFen() const {
   return fen;
 }
 
-
-
 std::ostream &operator<<(std::ostream &os, const Board &b) {
   constexpr std::string_view separator = "+---+---+---+---+---+---+---+---+\n";
   std::string output{separator};
   for (int r = 7; r >= 0; r--) {
     output += "| ";
     for (int c = 0; c < 8; c++) {
-      Square square = static_cast<Square>(r*8+c);
-      output += b.getPieceFromMap(square) == NO_PIECE_TYPE ? ' ' : pieceTypeToChar(b.getPieceFromMap(square));
+      Square square = static_cast<Square>(r * 8 + c);
+      output += b.getPieceFromMap(square) == NO_PIECE_TYPE
+                    ? ' '
+                    : pieceTypeToChar(b.getPieceFromMap(square));
       output += " | ";
     }
     output += "\n" + std::string(separator);
@@ -179,8 +179,7 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     castle = '-';
   output += "Castle rights: " + castle + "\n";
   output += "En passant square: " +
-            squareToString(
-                static_cast<Square>(b.getEnPassantSquare())) +
+            squareToString(static_cast<Square>(b.getEnPassantSquare())) +
             std::string("\n");
   output += "Halfmove clock: " + std::to_string(b.getHalfmoveClock()) + "\n";
   output += "Fullmove clock: " + std::to_string(b.getFullmoveClock()) + "\n";

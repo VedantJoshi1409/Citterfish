@@ -12,7 +12,8 @@ int main() {
   std::cout << board << std::endl;
   // MoveList moveList;
   // generateMoves(board, moveList);
-  // std::cout << static_cast<uint16_t>(moveList.count) << " moves generated."
+  // std::cout << static_cast<uint16_t>(moveList.count) << " moves
+  // generated."
   // << std::endl; for (uint8_t i = 0; i < moveList.count; ++i) {
   //   const Move &move = moveList.moves[i];
   //   std::cout << squareToString(move.getFromSquare()) << " -> "

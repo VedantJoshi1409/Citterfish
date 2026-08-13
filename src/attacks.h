@@ -7,6 +7,7 @@ namespace citterfish::attacks {
 namespace detail {
 inline std::array<Bitboard, 64> knightAttacks;
 inline std::array<Bitboard, 64> kingAttacks;
+inline std::array<std::array<Bitboard, 64>, 2> pawnAttackers;
 inline std::array<std::array<Bitboard, 64>, 64> fromToBitboards{};
 } // namespace detail
 
@@ -20,6 +21,10 @@ inline Bitboard getKnightAttacks(Square square) {
 
 inline Bitboard getKingAttacks(Square square) {
   return detail::kingAttacks[static_cast<int>(square)];
+}
+
+template <Color C> inline Bitboard getPawnAttackers(Square square) {
+  return detail::pawnAttackers[C][square];
 }
 
 inline Bitboard getFromToBitboard(Square from, Square to) {
