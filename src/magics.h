@@ -11,7 +11,7 @@ struct alignas(32) Magic {
   uint8_t shift;
 };
 
-inline constexpr std::array<Magic, 64> RookMagics = {{
+inline constexpr std::array<Magic, 64> ROOK_MAGICS = {{
     {282578800148862ULL, 5296233649268604928ULL, 0, 52},
     {565157600297596ULL, 612507691801133056ULL, 4096, 53},
     {1130315200595066ULL, 2449975929066356744ULL, 6144, 53},
@@ -77,7 +77,7 @@ inline constexpr std::array<Magic, 64> RookMagics = {{
     {4485655873561051136ULL, 1125827562356340ULL, 84953, 54},
     {9115426935197958144ULL, 8522499339677771678ULL, 85977, 53},
 }};
-inline constexpr std::array<Magic, 64> BishopMagics = {{
+inline constexpr std::array<Magic, 64> BISHOP_MAGICS = {{
     {18049651735527936ULL, 18441670916271046655ULL, 0, 59},
     {70506452091904ULL, 18161155296967783798ULL, 32, 60},
     {275415828992ULL, 2382444096953255944ULL, 48, 59},
@@ -144,10 +144,10 @@ inline constexpr std::array<Magic, 64> BishopMagics = {{
     {18049651735527936ULL, 4899808981553917065ULL, 4751, 59},
 }};
 
-inline std::array<Bitboard, ROOK_TABLE_SIZE> RookAttackTable;
-inline std::array<Bitboard, BISHOP_TABLE_SIZE> BishopAttackTable;
+inline std::array<Bitboard, ROOK_TABLE_SIZE> ROOK_ATTACK_TABLE;
+inline std::array<Bitboard, BISHOP_TABLE_SIZE> BISHOP_ATTACK_TABLE;
 
-template <Piece P> void genMagicsArray();
-template <Piece P> void fillAttackMap();
-template <Piece P> bool verifyAttackMap();
+template <Piece P> void gen_magics_array();
+template <Piece P> void fill_attack_map();
+template <Piece P> bool verify_attack_map();
 } // namespace citterfish

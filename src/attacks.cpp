@@ -4,7 +4,7 @@
 
 namespace citterfish::attacks {
 namespace {
-void initializeKnightAttacks() {
+void initialize_knight_attacks() {
   for (int square = 0; square < 64; ++square) {
     Bitboard attacks = 0;
     int rank = square / 8;
@@ -42,11 +42,11 @@ void initializeKnightAttacks() {
         }
       }
     }
-    detail::knightAttacks[static_cast<int>(square)] = attacks;
+    detail::knight_attacks[static_cast<int>(square)] = attacks;
   }
 }
 
-void initializeKingAttacks() {
+void initialize_king_attacks() {
   for (int square = 0; square < 64; ++square) {
     Bitboard attacks = 0;
     int rank = square / 8;
@@ -76,11 +76,11 @@ void initializeKingAttacks() {
         attacks |= 1ULL << (square + SOUTH + EAST);
       }
     }
-    detail::kingAttacks[static_cast<int>(square)] = attacks;
+    detail::king_attacks[static_cast<int>(square)] = attacks;
   }
 }
 
-void initializePawnAttackers() {
+void initialize_pawn_attackers() {
   for (Square s = a1; s <= h8; ++s) {
     Bitboard w_pawns = 0;
     Bitboard b_pawns = 0;
@@ -93,47 +93,47 @@ void initializePawnAttackers() {
       w_pawns |= 1ULL << (s + (SOUTH + EAST)); // wpawns attack from below
       b_pawns |= 1ULL << (s + (NORTH + EAST)); // bpawns attack from above
     }
-    detail::pawnAttackers[WHITE][s] =
+    detail::pawn_attackers[WHITE][s] =
         b_pawns; // b_pawns attack you if you are white
-    detail::pawnAttackers[BLACK][s] =
+    detail::pawn_attackers[BLACK][s] =
         w_pawns; // w_pawns attack you if you are black
   }
 }
 
-void initializeFromToBitboards() {
+void initialize_from_to_bb() {
   constexpr int dirs[8][2] = {{1, 0}, {-1, 0},  {0, 1},  {0, -1},
                               {1, 1}, {-1, -1}, {1, -1}, {-1, 1}};
-  for (int fromSquare = 0; fromSquare < 64; ++fromSquare) {
-    const int r = fromSquare / 8;
-    const int f = fromSquare % 8;
+  for (Square from = a1; from <= h8; ++from) {
+    const int r = from / 8;
+    const int f = from % 8;
     for (const auto &[dr, df] : dirs) {
       Bitboard bb = 0;
       for (int i = r + dr, j = f + df; 0 <= i && i < 8 && 0 <= j && j < 8;
            i += dr, j += df) {
         int toSquare = i * 8 + j;
-        detail::fromToBitboards[fromSquare][toSquare] = bb;
+        detail::from_to_bb[from][toSquare] = bb;
         bb |= 1ULL << toSquare;
       }
     }
   }
 }
 
-void initializeRays() {
+void initialize_rays() {
   for (Square s = a1; s <= h8; ++s) {
-    detail::orthoRays[s] = getSlidingAttacks<ROOK>(s, 0);
-    detail::diagRays[s] = getSlidingAttacks<BISHOP>(s, 0);
+    detail::ortho_rays[s] = sliding_attacks<ROOK>(s, 0);
+    detail::diag_rays[s] = sliding_attacks<BISHOP>(s, 0);
   }
 }
 } // namespace
 
-void initializeAttacks() {
-  initializeKnightAttacks();
-  initializeKingAttacks();
-  initializePawnAttackers();
-  initializeFromToBitboards();
-  fillAttackMap<ROOK>();
-  fillAttackMap<BISHOP>();
-  initializeRays();
+void initialize_attacks() {
+  initialize_knight_attacks();
+  initialize_king_attacks();
+  initialize_pawn_attackers();
+  initialize_from_to_bb();
+  fill_attack_map<ROOK>();
+  fill_attack_map<BISHOP>();
+  initialize_rays();
 }
 
 } // namespace citterfish::attacks

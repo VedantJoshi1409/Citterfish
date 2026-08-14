@@ -7,7 +7,7 @@
 
 namespace citterfish {
 Board::Board(const std::string &fen) {
-  pieceMap.fill(NO_PIECE_TYPE);
+  piece_map.fill(NO_PIECE_TYPE);
   uint8_t index = 56;
   int i = 0;
   for (; i < fen.length() && fen.at(i) != ' '; i++) {
@@ -19,65 +19,65 @@ Board::Board(const std::string &fen) {
     if ('0' <= c && c <= '9') { // skip squares
       index += (c - '0');
     } else {
-      pieceMap[index] = pieceToPieceType(charToPiece(c), charToColor(c));
+      piece_map[index] = pieceToPieceType(charToPiece(c), charToColor(c));
       ++index;
     }
   }
-  whiteToMove = fen.at(i + 1) == 'w';
+  is_white = fen.at(i + 1) == 'w';
   i += 3;
-  castlingRights = 0;
+  castling_rights = 0;
   for (; i < fen.length() && fen.at(i) != ' '; i++) {
     switch (fen.at(i)) {
     case 'K':
-      castlingRights |= WhiteKingSide;
+      castling_rights |= WhiteKingSide;
       break;
     case 'Q':
-      castlingRights |= WhiteQueenSide;
+      castling_rights |= WhiteQueenSide;
       break;
     case 'k':
-      castlingRights |= BlackKingSide;
+      castling_rights |= BlackKingSide;
       break;
     case 'q':
-      castlingRights |= BlackQueenSide;
+      castling_rights |= BlackQueenSide;
       break;
     }
   }
-  enPassantSquare = (fen.at(i + 1) == '-')
+  en_passant_square = (fen.at(i + 1) == '-')
                         ? no_square
                         : squareFromString(fen.substr(i + 1, 2));
-  halfmoveClock = (i + 3) < fen.size() ? fen.at(i + 3) - '0' : 0;
-  fullmoveClock = (i + 5) < fen.size() ? fen.at(i + 5) - '0' : 0;
-  refreshBitboards();
-  refreshZobristKey();
+  halfmove_clock = (i + 3) < fen.size() ? fen.at(i + 3) - '0' : 0;
+  fullmove_clock = (i + 5) < fen.size() ? fen.at(i + 5) - '0' : 0;
+  refresh_bitboards();
+  refresh_zobrist_hash();
 }
 
 Board::Board()
     : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0") {}
 
-void Board::refreshPieceMap() {
-  pieceMap.fill(NO_PIECE_TYPE);
+void Board::refresh_piece_map() {
+  piece_map.fill(NO_PIECE_TYPE);
   for (Color color : {WHITE, BLACK}) {
     for (Piece piece : {PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING}) {
       Bitboard bitboard = pieces[color][piece];
       while (bitboard) {
         int square = std::countr_zero(bitboard);
-        pieceMap[square] = pieceToPieceType(piece, color);
+        piece_map[square] = pieceToPieceType(piece, color);
         bitboard &= bitboard - 1; // Clear lsb
       }
     }
   }
 }
 
-void Board::refreshBitboards() {
+void Board::refresh_bitboards() {
   for (auto &row : pieces) {
     for (auto &x : row) {
       x = 0;
     }
   }
   for (Square square = a1; square <= h8; ++square) {
-    if (pieceMap[square] != NO_PIECE_TYPE) {
-      Piece piece = pieceTypeToPiece(pieceMap[square]);
-      Color color = pieceTypeToColor(pieceMap[square]);
+    if (piece_map[square] != NO_PIECE_TYPE) {
+      Piece piece = pieceTypeToPiece(piece_map[square]);
+      Color color = pieceTypeToColor(piece_map[square]);
       pieces[color][piece] |= 1ULL << square;
     }
   }
@@ -87,37 +87,37 @@ void Board::refreshBitboards() {
   occupied[BLACK] = pieces[BLACK][PAWN] | pieces[BLACK][KNIGHT] |
                     pieces[BLACK][BISHOP] | pieces[BLACK][ROOK] |
                     pieces[BLACK][QUEEN] | pieces[BLACK][KING];
-  allOccupied = occupied[WHITE] | occupied[BLACK];
+  all_occupied = occupied[WHITE] | occupied[BLACK];
 }
 
-void Board::refreshZobristKey() {
-  zobristHash = 0;
+void Board::refresh_zobrist_hash() {
+  zobrist_hash = 0;
   for (Square square = a1; square <= h8; ++square) {
-    if (pieceMap[square] != NO_PIECE_TYPE) {
-      Piece piece = pieceTypeToPiece(pieceMap[square]);
-      Color color = pieceTypeToColor(pieceMap[square]);
-      zobristHash ^= zobrist::getPieceKey(color, piece, square);
+    if (piece_map[square] != NO_PIECE_TYPE) {
+      Piece piece = pieceTypeToPiece(piece_map[square]);
+      Color color = pieceTypeToColor(piece_map[square]);
+      zobrist_hash ^= zobrist::getPieceKey(color, piece, square);
     }
   }
-  zobristHash ^= zobrist::getSideToMoveKey(whiteToMove ? WHITE : BLACK);
-  zobristHash ^= zobrist::getEnPassantKey(enPassantSquare);
-  zobristHash ^= zobrist::getCastlingKey(castlingRights);
+  zobrist_hash ^= zobrist::getSideToMoveKey(is_white ? WHITE : BLACK);
+  zobrist_hash ^= zobrist::getEnPassantKey(en_passant_square);
+  zobrist_hash ^= zobrist::getCastlingKey(castling_rights);
 }
 
-std::string Board::toFen() const {
+std::string Board::to_fen() const {
   std::string fen;
   for (int row = 7; row >= 0; --row) {
     int emptyCount = 0;
     for (int col = 0; col < 8; ++col) {
       int square = row * 8 + col;
-      if (pieceMap[square] == NO_PIECE_TYPE) {
+      if (piece_map[square] == NO_PIECE_TYPE) {
         ++emptyCount;
       } else {
         if (emptyCount > 0) {
           fen += std::to_string(emptyCount);
           emptyCount = 0;
         }
-        fen += pieceTypeToChar(pieceMap[square]);
+        fen += pieceTypeToChar(piece_map[square]);
       }
     }
     if (emptyCount > 0) {
@@ -128,26 +128,26 @@ std::string Board::toFen() const {
     }
   }
   fen += ' ';
-  fen += (whiteToMove ? 'w' : 'b');
+  fen += (is_white ? 'w' : 'b');
   fen += ' ';
-  if (castlingRights == 0) {
+  if (castling_rights == 0) {
     fen += '-';
   } else {
-    if (castlingRights & WhiteKingSide)
+    if (castling_rights & WhiteKingSide)
       fen += 'K';
-    if (castlingRights & WhiteQueenSide)
+    if (castling_rights & WhiteQueenSide)
       fen += 'Q';
-    if (castlingRights & BlackKingSide)
+    if (castling_rights & BlackKingSide)
       fen += 'k';
-    if (castlingRights & BlackQueenSide)
+    if (castling_rights & BlackQueenSide)
       fen += 'q';
   }
   fen += ' ';
-  fen += squareToString(enPassantSquare);
+  fen += squareToString(en_passant_square);
   fen += ' ';
-  fen += std::to_string(halfmoveClock);
+  fen += std::to_string(halfmove_clock);
   fen += ' ';
-  fen += std::to_string(fullmoveClock);
+  fen += std::to_string(fullmove_clock);
   return fen;
 }
 
@@ -158,34 +158,34 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     output += "| ";
     for (int c = 0; c < 8; c++) {
       Square square = static_cast<Square>(r * 8 + c);
-      output += b.getPieceFromMap(square) == NO_PIECE_TYPE
+      output += b.get_piece_map(square) == NO_PIECE_TYPE
                     ? ' '
-                    : pieceTypeToChar(b.getPieceFromMap(square));
+                    : pieceTypeToChar(b.get_piece_map(square));
       output += " | ";
     }
     output += "\n" + std::string(separator);
   }
   output +=
-      std::string((b.getWhiteToMove() ? "White" : "Black")) + " to move\n";
+      std::string((b.get_is_white() ? "White" : "Black")) + " to move\n";
   std::string castle{};
-  if ((b.getCastlingRights() & WhiteKingSide) != 0)
+  if ((b.get_castling_rights() & WhiteKingSide) != 0)
     castle += 'K';
-  if ((b.getCastlingRights() & WhiteQueenSide) != 0)
+  if ((b.get_castling_rights() & WhiteQueenSide) != 0)
     castle += 'Q';
-  if ((b.getCastlingRights() & BlackKingSide) != 0)
+  if ((b.get_castling_rights() & BlackKingSide) != 0)
     castle += 'k';
-  if ((b.getCastlingRights() & BlackQueenSide) != 0)
+  if ((b.get_castling_rights() & BlackQueenSide) != 0)
     castle += 'q';
   if (castle.empty())
     castle = '-';
   output += "Castle rights: " + castle + "\n";
   output += "En passant square: " +
-            squareToString(static_cast<Square>(b.getEnPassantSquare())) +
+            squareToString(static_cast<Square>(b.get_en_passant_square())) +
             std::string("\n");
-  output += "Halfmove clock: " + std::to_string(b.getHalfmoveClock()) + "\n";
-  output += "Fullmove clock: " + std::to_string(b.getFullmoveClock()) + "\n";
-  output += "Zobrist hash: " + std::to_string(b.getZobristHash()) + "\n";
-  output += "FEN: " + b.toFen() + "\n";
+  output += "Halfmove clock: " + std::to_string(b.get_halfmove_clock()) + "\n";
+  output += "Fullmove clock: " + std::to_string(b.get_fullmove_clock()) + "\n";
+  output += "Zobrist hash: " + std::to_string(b.get_zobrist_hash()) + "\n";
+  output += "FEN: " + b.to_fen() + "\n";
   os << output;
   return os;
 }

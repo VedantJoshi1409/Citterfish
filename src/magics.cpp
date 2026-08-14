@@ -7,7 +7,7 @@
 namespace citterfish {
 namespace {
 
-Bitboard getBishopMask(Square square) {
+Bitboard get_bishop_mask(Square square) {
   Bitboard mask = 0;
   int rank = square / 8;
   int file = square % 8;
@@ -28,7 +28,7 @@ Bitboard getBishopMask(Square square) {
   return mask;
 }
 
-Bitboard getRookMask(Square square) {
+Bitboard get_rook_mask(Square square) {
   Bitboard mask = 0;
   int rank = square / 8;
   int file = square % 8;
@@ -49,7 +49,7 @@ Bitboard getRookMask(Square square) {
   return mask;
 }
 
-Bitboard slowRookAttack(Square square, Bitboard occupancy) {
+Bitboard slow_rook_attack(Square square, Bitboard occupancy) {
   Bitboard attacks = 0;
   int rank = square / 8;
   int file = square % 8;
@@ -82,7 +82,7 @@ Bitboard slowRookAttack(Square square, Bitboard occupancy) {
   return attacks;
 }
 
-Bitboard slowBishopAttack(Square square, Bitboard occupancy) {
+Bitboard slow_bishop_attack(Square square, Bitboard occupancy) {
   Bitboard attacks = 0;
   int rank = square / 8;
   int file = square % 8;
@@ -129,118 +129,118 @@ Bitboard PDEP(Bitboard source, Bitboard mask) {
 }
 
 template <Piece P>
-void fillMagicSearchTable(Square square, Bitboard mask,
-                          std::array<Bitboard, 4096> &occupancyTable,
-                          std::array<Bitboard, 4096> &attackTable) {
+void fill_magic_search_table(Square square, Bitboard mask,
+                          std::array<Bitboard, 4096> &occupancy_table,
+                          std::array<Bitboard, 4096> &attack_table) {
   int bitcount = std::popcount(mask);
-  int tableSize = 1 << bitcount;
-  for (int i = 0; i < tableSize; ++i) {
-    occupancyTable[i] = PDEP(i, mask); // compute occupancies
-    attackTable[i] =
-        (P == ROOK) ? slowRookAttack(square, occupancyTable[i])
-                    : slowBishopAttack(
-                          square, occupancyTable[i]); // find slow attack mask
+  int table_size = 1 << bitcount;
+  for (int i = 0; i < table_size; ++i) {
+    occupancy_table[i] = PDEP(i, mask); // compute occupancies
+    attack_table[i] =
+        (P == ROOK) ? slow_rook_attack(square, occupancy_table[i])
+                    : slow_bishop_attack(
+                          square, occupancy_table[i]); // find slow attack mask
                                                       // for each occupancy
   }
 }
 
 } // namespace
 
-template <Piece P> void genMagicsArray() {
+template <Piece P> void gen_magics_array() {
   std::ifstream in((P == ROOK) ? "data/rook_magics.txt"
                                : "data/bishop_magics.txt");
   std::string tok;
-  uint32_t tableIdx = 0;
+  uint32_t table_idx = 0;
 
   for (Square square = a1; square <= h8; ++square) {
     in >> tok;
     uint64_t magic = std::stoull(tok, nullptr, 0);
-    Bitboard mask = (P == ROOK) ? getRookMask(square) : getBishopMask(square);
-    uint32_t curIdx = tableIdx;
+    Bitboard mask = (P == ROOK) ? get_rook_mask(square) : get_bishop_mask(square);
+    uint32_t cur_idx = table_idx;
     uint32_t shift = 0;
     int bitcount = std::popcount(mask);
-    int tableSize = 1 << bitcount;
+    int table_size = 1 << bitcount;
 
     std::array<Bitboard, 4096> map{
         0}; // map between the hashed idx and the attack masks
     std::array<Bitboard, 4096>
-        occupancyTable; // contains <tableSize> occupancy masks
+        occupancy_table; // contains <table_size> occupancy masks
     std::array<Bitboard, 4096>
-        attackTable; // contains the attackMask for each occupancy
-    fillMagicSearchTable<P>(square, mask, occupancyTable, attackTable);
+        attack_table; // contains the attackMask for each occupancy
+    fill_magic_search_table<P>(square, mask, occupancy_table, attack_table);
     bool failed = false;
-    for (int shiftOffset = 0; shiftOffset < bitcount && !failed;
-         ++shiftOffset) { // trying to find best magics
-      int constructiveCollisions = 0;
-      uint64_t maxIdx = 0;
-      for (int occIdx = 0; occIdx < tableSize;
-           ++occIdx) { // loop through each possible occupancy mask
+    for (int shift_offset = 0; shift_offset < bitcount && !failed;
+         ++shift_offset) { // trying to find best magics
+      int constructive_collisions = 0;
+      uint64_t max_idx = 0;
+      for (int occ_idx = 0; occ_idx < table_size;
+           ++occ_idx) { // loop through each possible occupancy mask
         uint64_t idx =
-            (occupancyTable[occIdx] * magic) >> (64 - bitcount + shiftOffset);
-        maxIdx = std::max(maxIdx, idx);
+            (occupancy_table[occ_idx] * magic) >> (64 - bitcount + shift_offset);
+        max_idx = std::max(max_idx, idx);
         if (map[idx] == 0) { // fresh hash
-          map[idx] = attackTable[occIdx];
-        } else if (map[idx] != attackTable[occIdx]) { // destructive collision
+          map[idx] = attack_table[occ_idx];
+        } else if (map[idx] != attack_table[occ_idx]) { // destructive collision
           failed = true;
           break;
         } else {
-          ++constructiveCollisions;
+          ++constructive_collisions;
         }
       }
       if (!failed) {
-        shift = shiftOffset;
-        tableIdx = curIdx + maxIdx;
-      } else if (shiftOffset == 0) {
+        shift = shift_offset;
+        table_idx = cur_idx + max_idx;
+      } else if (shift_offset == 0) {
         std::cout << "FAIL" << std::endl;
       }
       map.fill(0); // if checking for best magic, reset
     }
-    std::cout << "{" << mask << "ULL, " << magic << "ULL, " << curIdx << ", "
+    std::cout << "{" << mask << "ULL, " << magic << "ULL, " << cur_idx << ", "
               << 64 - bitcount + shift << "}," << std::endl;
-    ++tableIdx;
+    ++table_idx;
   }
-  --tableIdx;
-  std::cout << "Size: " << tableIdx << std::endl;
+  --table_idx;
+  std::cout << "Size: " << table_idx << std::endl;
 }
-template void genMagicsArray<ROOK>();
-template void genMagicsArray<BISHOP>();
+template void gen_magics_array<ROOK>();
+template void gen_magics_array<BISHOP>();
 
-template <Piece P> void fillAttackMap() {
+template <Piece P> void fill_attack_map() {
   for (Square square = a1; square <= h8; ++square) {
-    Magic m = (P == ROOK) ? RookMagics[square] : BishopMagics[square];
-    int bitCount = std::popcount(m.mask);
-    for (int i = 0; i < (1ULL << bitCount); i++) {
+    Magic m = (P == ROOK) ? ROOK_MAGICS[square] : BISHOP_MAGICS[square];
+    int bit_count = std::popcount(m.mask);
+    for (int i = 0; i < (1ULL << bit_count); i++) {
       Bitboard occupancy = PDEP(i, m.mask);
-      uint64_t hashIdx = ((occupancy * m.magic) >> m.shift) + m.idx;
-      uint64_t attacks = (P == ROOK) ? slowRookAttack(square, occupancy)
-                                     : slowBishopAttack(square, occupancy);
-      ((P == ROOK) ? RookAttackTable[hashIdx] : BishopAttackTable[hashIdx]) =
+      uint64_t hash_idx = ((occupancy * m.magic) >> m.shift) + m.idx;
+      uint64_t attacks = (P == ROOK) ? slow_rook_attack(square, occupancy)
+                                     : slow_bishop_attack(square, occupancy);
+      ((P == ROOK) ? ROOK_ATTACK_TABLE[hash_idx] : BISHOP_ATTACK_TABLE[hash_idx]) =
           attacks;
     }
   }
 }
-template void fillAttackMap<ROOK>();
-template void fillAttackMap<BISHOP>();
+template void fill_attack_map<ROOK>();
+template void fill_attack_map<BISHOP>();
 
-template <Piece P> bool verifyAttackMap() {
+template <Piece P> bool verify_attack_map() {
   for (Square square = a1; square <= h8; ++square) {
-    Magic m = (P == ROOK) ? RookMagics[square] : BishopMagics[square];
-    int bitCount = std::popcount(m.mask);
-    for (int i = 0; i < (1ULL << bitCount); i++) {
+    Magic m = (P == ROOK) ? ROOK_MAGICS[square] : BISHOP_MAGICS[square];
+    int bit_count = std::popcount(m.mask);
+    for (int i = 0; i < (1ULL << bit_count); i++) {
       Bitboard occupancy = PDEP(i, m.mask);
 
-      uint64_t hashIdx = ((occupancy * m.magic) >> m.shift) + m.idx;
-      uint64_t attacks = (P == ROOK) ? slowRookAttack(square, occupancy)
-                                     : slowBishopAttack(square, occupancy);
-      if (((P == ROOK) ? RookAttackTable[hashIdx]
-                       : BishopAttackTable[hashIdx]) != attacks) {
+      uint64_t hash_idx = ((occupancy * m.magic) >> m.shift) + m.idx;
+      uint64_t attacks = (P == ROOK) ? slow_rook_attack(square, occupancy)
+                                     : slow_bishop_attack(square, occupancy);
+      if (((P == ROOK) ? ROOK_ATTACK_TABLE[hash_idx]
+                       : BISHOP_ATTACK_TABLE[hash_idx]) != attacks) {
         return false;
       }
     }
   }
   return true;
 }
-template bool verifyAttackMap<ROOK>();
-template bool verifyAttackMap<BISHOP>();
+template bool verify_attack_map<ROOK>();
+template bool verify_attack_map<BISHOP>();
 
 } // namespace citterfish
