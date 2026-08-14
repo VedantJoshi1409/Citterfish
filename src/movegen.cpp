@@ -81,6 +81,8 @@ void generatePawnMoves(Bitboard pawns, Bitboard enemyOccupied,
   }
 }
 
+void generateEnPassant(Bitboard pawns);
+
 void generateKnightMoves(Bitboard knights, Bitboard friendlyOccupied,
                          MoveList &moveList) {
   Bitboard bb = knights;
@@ -97,8 +99,9 @@ void generateKnightMoves(Bitboard knights, Bitboard friendlyOccupied,
 }
 
 template <Piece P>
-void generateSliderMoves(Bitboard pieces, Bitboard friendlyOccupied, Bitboard occupied, MoveList &moveList) {
-  while(pieces) {
+void generateSliderMoves(Bitboard pieces, Bitboard friendlyOccupied,
+                         Bitboard occupied, MoveList &moveList) {
+  while (pieces) {
     Square cur = getLeastSquare(pieces);
   }
 }
@@ -115,116 +118,119 @@ void generateKingMoves(Bitboard king, Bitboard friendlyOccupied,
   }
 }
 
-template <Color C>
-void generatePinnedMoves(Board &b, MoveList &moveList) {
+template <Color C> void generatePinnedMoves(Board &b, MoveList &moveList) {
   constexpr Direction D = (C == WHITE) ? NORTH : SOUTH;
   constexpr bool isWhite = C == WHITE;
   Bitboard pinners = b.getPinners();
   Square kingSquare = getLeastSquare(b.getPieces<KING>(C));
-    while (pinners) { //get all pinned piece moves
-      Square attacker = getLeastSquare(pinners);
-      Bitboard pinRay = attacks::getFromToBitboard(kingSquare, attacker) | 1ULL << attacker;
-      Square pinnedPiece = getLeastSquare(pinRay & b.getPinned());
+  while (pinners) { // get all pinned piece moves
+    Square attacker = getLeastSquare(pinners);
+    Bitboard pinRay =
+        attacks::getFromToBitboard(kingSquare, attacker) | 1ULL << attacker;
+    Square pinnedPiece = getLeastSquare(pinRay & b.getPinned());
 
-      Piece piece = pieceTypeToPiece(b.getPieceFromMap(pinnedPiece));
-      if (piece == PAWN) {
-        //Cant enpassant if pinned
-        Bitboard pawnBB = 1ULL << pinnedPiece;
-        Bitboard pawnMoves = ((pawnBB << (D + EAST)) | (pawnBB << (D + WEST))) & attacker; //attacking squares
-        pawnMoves |= pawnBB << D;
-        if ((pawnBB & (isWhite ? RANK_2 : RANK_7)) != 0) pawnMoves |= pawnBB << 2*D;
-        pawnMoves &= pinRay; //only keep moves along pin ray
-        while (pawnMoves) {
-          Square toSquare = getLeastSquare(pawnMoves);
-          if ((pawnBB & (isWhite ? RANK_7 : RANK_2)) != 0) { //promoting
-            moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, QUEEN));
-            moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, KNIGHT));
-            moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, ROOK));
-            moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, BISHOP));
-          } else {
-            moveList.addMove(Move(pinnedPiece, toSquare));
-          }
-          pawnMoves &= pawnMoves-1;
+    Piece piece = pieceTypeToPiece(b.getPieceFromMap(pinnedPiece));
+    if (piece == PAWN) {
+      if (((1ULL << b.getEnPassantSquare()) & pinRay) != 0) {
+      }
+      Bitboard pawnBB = 1ULL << pinnedPiece;
+      Bitboard pawnMoves = ((pawnBB << (D + EAST)) | (pawnBB << (D + WEST))) &
+                           attacker; // attacking squares
+      pawnMoves |= pawnBB << D;
+      if ((pawnBB & (isWhite ? RANK_2 : RANK_7)) != 0)
+        pawnMoves |= pawnBB << 2 * D;
+      pawnMoves &= pinRay; // only keep moves along pin ray
+      while (pawnMoves) {
+        Square toSquare = getLeastSquare(pawnMoves);
+        if ((pawnBB & (isWhite ? RANK_7 : RANK_2)) != 0) { // promoting
+          moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, QUEEN));
+          moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, KNIGHT));
+          moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, ROOK));
+          moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, BISHOP));
+        } else {
+          moveList.addMove(Move(pinnedPiece, toSquare));
         }
+        pawnMoves &= pawnMoves - 1;
+      }
 
-
-      } else {
-        switch (piece) {
-        case BISHOP:
+    } else {
+      switch (piece) {
+      case BISHOP:
         pinRay &= attacks::getDiagRays(pinnedPiece);
         break;
-        case ROOK: 
-        //only can be pinned once rook moves so no castling
+      case ROOK:
+        // only can be pinned once rook moves so no castling
         pinRay &= attacks::getOrthoRays(pinnedPiece);
         break;
-        case QUEEN:
-        pinRay &= (attacks::getOrthoRays(pinnedPiece) | attacks::getDiagRays(pinnedPiece));
+      case QUEEN:
+        pinRay &= (attacks::getOrthoRays(pinnedPiece) |
+                   attacks::getDiagRays(pinnedPiece));
         break;
-        default:
+      default:
         break;
       }
       while (pinRay) {
         moveList.addMove(Move(pinnedPiece, getLeastSquare(pinRay)));
-        pinRay &= pinRay -1;
-      }
+        pinRay &= pinRay - 1;
       }
     }
+  }
 }
 
-//generates the attack mask for all squares attacked by pieces
-template <Color C>
-Bitboard generateAttackMask(Board &b) {
+// generates the attack mask for all squares attacked by pieces
+template <Color C> Bitboard generateAttackMask(Board &b) {
   constexpr Direction D = C == WHITE ? NORTH : SOUTH;
   Bitboard mask = 0;
   Bitboard cur = b.getPieces<PAWN>(C);
-  mask |= (cur & ~FILE_A) << (D+WEST);
-  mask |= (cur & ~FILE_H) << (D+EAST);
-  
+  mask |= (cur & ~FILE_A) << (D + WEST);
+  mask |= (cur & ~FILE_H) << (D + EAST);
+
   cur = b.getPieces<KNIGHT>(C);
   while (cur) {
     mask |= attacks::getKnightAttacks(getLeastSquare(cur));
-    cur &= cur-1;
+    cur &= cur - 1;
   }
 
   cur = b.getPieces<BISHOP>(C);
   while (cur) {
-    mask |= attacks::getSlidingAttacks<BISHOP>(getLeastSquare(cur), b.getOccupied());
-    cur &= cur-1;
+    mask |= attacks::getSlidingAttacks<BISHOP>(getLeastSquare(cur),
+                                               b.getOccupied());
+    cur &= cur - 1;
   }
 
   cur = b.getPieces<ROOK>(C);
   while (cur) {
-    mask |= attacks::getSlidingAttacks<ROOK>(getLeastSquare(cur), b.getOccupied());
-    cur &= cur-1;
+    mask |=
+        attacks::getSlidingAttacks<ROOK>(getLeastSquare(cur), b.getOccupied());
+    cur &= cur - 1;
   }
 
   cur = b.getPieces<QUEEN>(C);
   while (cur) {
-    mask |= attacks::getSlidingAttacks<QUEEN>(getLeastSquare(cur), b.getOccupied());
-    cur &= cur-1;
+    mask |=
+        attacks::getSlidingAttacks<QUEEN>(getLeastSquare(cur), b.getOccupied());
+    cur &= cur - 1;
   }
 
   mask |= attacks::getKingAttacks(getLeastSquare(b.getPieces<KING>(C)));
   return mask;
 }
 
-template <Color C>
-void generateMoves(Board &b, MoveList &moveList) {
+template <Color C> void generateMoves(Board &b, MoveList &moveList) {
+  constexpr Direction D = C == WHITE ? NORTH : SOUTH;
   moveList.count = 0;
   Square kingSquare = getLeastSquare(b.getPieces<KING>(C));
   Bitboard attackedSquares = generateAttackMask<~C>();
   b.refreshChecksAndPins<C>();
-  if (b.getCheckers() == 0) { //no checkers
+  if (b.getCheckers() == 0) { // no checkers
     generatePinnedMoves<C>(b, moveList);
     Bitboard nonPinned = ~b.getPinned();
-    // generatePawnMoves(b.getPieces<PAWN>(C)&nonPinned, b.getOccupied(~C), b.getOccupied(), moveList);
+    generatePawnMoves<D>(b.getPieces<PAWN>(C) & nonPinned, b.getOccupied(~C),
+                         b.getOccupied(), moveList);
 
-    
+  } else if ((b.getCheckers() & (b.getCheckers() - 1)) == 0) { // one checker
 
-  } else if ((b.getCheckers() & (b.getCheckers()-1)) == 0) { //one checker
-
-  } else { //two checkers
-    
+  } else { // two checkers
   }
 }
 } // namespace citterfish

@@ -22,11 +22,23 @@ inline void printBB(Bitboard bb) {
 constexpr Bitboard ALL_SQUARES = 0xFFFFFFFFFFFFFFFFULL;
 
 enum Color : uint8_t { WHITE, BLACK, BAD_COLOR };
-inline Color operator~(Color c) {
-  return static_cast<Color>(c^1);
-}
+constexpr Color operator~(Color c) { return static_cast<Color>(c ^ 1); }
 enum Piece : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, BAD_PIECE };
-enum PieceType : uint8_t { W_PAWN, W_KNIGHT, W_BISHOP, W_ROOK, W_QUEEN, W_KING, B_PAWN, B_KNIGHT, B_BISHOP, B_ROOK, B_QUEEN, B_KING, NO_PIECE_TYPE};
+enum PieceType : uint8_t {
+  W_PAWN,
+  W_KNIGHT,
+  W_BISHOP,
+  W_ROOK,
+  W_QUEEN,
+  W_KING,
+  B_PAWN,
+  B_KNIGHT,
+  B_BISHOP,
+  B_ROOK,
+  B_QUEEN,
+  B_KING,
+  NO_PIECE_TYPE
+};
 inline char pieceToChar(Piece piece, Color color) {
   switch (piece) {
   case PAWN:
@@ -46,10 +58,10 @@ inline char pieceToChar(Piece piece, Color color) {
   }
 }
 inline Color pieceTypeToColor(PieceType pt) {
-  return static_cast<Color>(pt/6);
+  return static_cast<Color>(pt / 6);
 }
 inline Piece pieceTypeToPiece(PieceType pt) {
-  return static_cast<Piece>(pt%6);
+  return static_cast<Piece>(pt % 6);
 }
 inline char pieceTypeToChar(PieceType pieceType) {
   return pieceToChar(pieceTypeToPiece(pieceType), pieceTypeToColor(pieceType));
@@ -79,7 +91,7 @@ inline Piece charToPiece(char c) {
   return BAD_PIECE;
 }
 inline PieceType pieceToPieceType(Piece piece, Color color) {
-  return static_cast<PieceType>(color*6+piece);
+  return static_cast<PieceType>(color * 6 + piece);
 }
 
 enum CastlingRight : uint8_t {
