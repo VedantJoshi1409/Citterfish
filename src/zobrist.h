@@ -21,6 +21,6 @@ inline Key getEnPassantKey(Square square) {
 }
 inline Key getSideToMoveKey(Color c) { return detail::sideToMoveKey[c]; }
 
-bool initializeZobristKeys(uint64_t seed = 0xDEADBEEFCAFEBABEULL);
+bool init_zobrist(uint64_t seed = 0xDEADBEEFCAFEBABEULL);
 
 } // namespace citterfish::zobrist

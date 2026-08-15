@@ -6,7 +6,7 @@ void recordMagic(uint64_t state, uint64_t magic, Square square,
                  std::ofstream &outputFile) {
   outputFile << std::format("State: {}\t\tSquare: {}\t\tMagic: {}\t\tGood "
                             "Collisions: {}\t\tMax Index: {}\t\tSaved Bits: {}",
-                            state, squareToString(square), magic,
+                            state, square_to_string(square), magic,
                             constructiveCollisions, maxIdx, shiftOffset)
              << std::endl;
 }
@@ -53,10 +53,10 @@ void findMagics(Square square, int epochs, uint64_t seed = 0xDEADBEEF) {
     stamp++;
     if (epoch % 1000000 == 0)
       std::cout << "On epoch " << epoch << std::endl;
-    uint64_t state = rng.getState();
+    uint64_t state = rng.get_state();
     uint64_t magic = rng.sparse();
     while (std::popcount((mask * magic) >> 56) < 8) {
-      state = rng.getState();
+      state = rng.get_state();
       magic = rng.sparse();
     }
     bool failed = false;
@@ -125,7 +125,7 @@ template <Piece P> void testMagic(Square square, uint64_t magic) {
     if (!failed) {
       std::cout << std::format("Square: {}\t\tMagic: {}\t\tGood "
                                "Collisions: {}\t\tMax Index: {}",
-                               squareToString(square), magic,
+                               square_to_string(square), magic,
                                constructiveCollisions, maxIdx)
                 << std::endl;
     } else {

@@ -4,7 +4,7 @@
 
 namespace citterfish::attacks {
 namespace {
-void initialize_knight_attacks() {
+void init_knight_attacks() {
   for (int square = 0; square < 64; ++square) {
     Bitboard attacks = 0;
     int rank = square / 8;
@@ -46,7 +46,7 @@ void initialize_knight_attacks() {
   }
 }
 
-void initialize_king_attacks() {
+void init_king_attacks() {
   for (int square = 0; square < 64; ++square) {
     Bitboard attacks = 0;
     int rank = square / 8;
@@ -80,7 +80,7 @@ void initialize_king_attacks() {
   }
 }
 
-void initialize_pawn_attackers() {
+void init_pawn_attackers() {
   for (Square s = a1; s <= h8; ++s) {
     Bitboard w_pawns = 0;
     Bitboard b_pawns = 0;
@@ -100,7 +100,7 @@ void initialize_pawn_attackers() {
   }
 }
 
-void initialize_from_to_bb() {
+void init_from_to_bb() {
   constexpr int dirs[8][2] = {{1, 0}, {-1, 0},  {0, 1},  {0, -1},
                               {1, 1}, {-1, -1}, {1, -1}, {-1, 1}};
   for (Square from = a1; from <= h8; ++from) {
@@ -118,7 +118,7 @@ void initialize_from_to_bb() {
   }
 }
 
-void initialize_rays() {
+void init_rays() {
   for (Square s = a1; s <= h8; ++s) {
     detail::ortho_rays[s] = sliding_attacks<ROOK>(s, 0);
     detail::diag_rays[s] = sliding_attacks<BISHOP>(s, 0);
@@ -126,14 +126,14 @@ void initialize_rays() {
 }
 } // namespace
 
-void initialize_attacks() {
-  initialize_knight_attacks();
-  initialize_king_attacks();
-  initialize_pawn_attackers();
-  initialize_from_to_bb();
+void init_attacks() {
+  init_knight_attacks();
+  init_king_attacks();
+  init_pawn_attackers();
+  init_from_to_bb();
   fill_attack_map<ROOK>();
   fill_attack_map<BISHOP>();
-  initialize_rays();
+  init_rays();
 }
 
 } // namespace citterfish::attacks

@@ -3,7 +3,7 @@
 
 namespace citterfish::zobrist {
 
-bool initializeZobristKeys(uint64_t seed) {
+bool init_zobrist(uint64_t seed) {
   PRNG rng(seed);
   for (auto &colorArray : detail::pieceKeys) {
     for (auto &pieceArray : colorArray) {

@@ -13,7 +13,7 @@ inline std::array<Bitboard, 64> diag_rays;
 inline std::array<std::array<Bitboard, 64>, 64> from_to_bb{};
 } // namespace detail
 
-void initialize_attacks();
+void init_attacks();
 
 inline Bitboard knight_attacks(Square square) {
   return detail::knight_attacks[static_cast<int>(square)];

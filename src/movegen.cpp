@@ -5,102 +5,102 @@
 
 namespace citterfish {
 template <Color C>
-void generatePawnMoves(Bitboard pawns, Bitboard enemyOccupied,
-                       Bitboard occupied, MoveList &moveList) {
+void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard occupied,
+                    MoveList &move_list) {
   constexpr Direction D = C == WHITE ? NORTH : SOUTH;
   constexpr Bitboard filesOn7 = D == NORTH ? RANK_7 : RANK_2;
   Bitboard pawnsBelow7 = pawns & ~filesOn7;
   Bitboard pawnsOn7 = pawns & filesOn7;
   Bitboard bb = (pawnsBelow7 << D) & ~occupied; // Generate single pawn push
   while (bb) {
-    Square to = getLeastSquare(bb);
+    Square to = get_least_square(bb);
     Square from = static_cast<Square>(to - D);
-    moveList.addMove(Move(from, to));
+    move_list.add_move(Move(from, to));
     bb &= bb - 1; // clear lsb
   }
 
   bb = (pawnsBelow7 & (D == NORTH ? RANK_2 : RANK_7)) << (2 * D) &
        ~occupied; // Generate double pawn push
   while (bb) {
-    Square to = getLeastSquare(bb);
+    Square to = get_least_square(bb);
     Square from = static_cast<Square>(to - 2 * D);
-    moveList.addMove(Move(from, to));
+    move_list.add_move(Move(from, to));
     bb &= bb - 1; // clear lsb
   }
 
   bb = (pawnsBelow7 & ~FILE_A) << (D + WEST) &
-       enemyOccupied; // Generate captures to the left
+       target; // Generate captures to the left
   while (bb) {
-    Square to = getLeastSquare(bb);
+    Square to = get_least_square(bb);
     Square from = static_cast<Square>(to - D - WEST);
-    moveList.addMove(Move(from, to));
+    move_list.add_move(Move(from, to));
     bb &= bb - 1; // clear lsb
   }
 
   bb = (pawnsBelow7 & ~FILE_H) << (D + EAST) &
-       enemyOccupied; // Generate captures to the right
+       target; // Generate captures to the right
   while (bb) {
-    Square to = getLeastSquare(bb);
+    Square to = get_least_square(bb);
     Square from = static_cast<Square>(to - D - EAST);
-    moveList.addMove(Move(from, to));
+    move_list.add_move(Move(from, to));
     bb &= bb - 1; // clear lsb
   }
 
   bb = pawnsOn7 << D & ~occupied; // Generate single pawn push for promotion
   while (bb) {
-    Square to = getLeastSquare(bb);
+    Square to = get_least_square(bb);
     Square from = static_cast<Square>(to - D);
-    moveList.addMove(Move(from, to, PROMOTION, QUEEN));
-    moveList.addMove(Move(from, to, PROMOTION, KNIGHT));
-    moveList.addMove(Move(from, to, PROMOTION, ROOK));
-    moveList.addMove(Move(from, to, PROMOTION, BISHOP));
+    move_list.add_move(Move(from, to, PROMOTION, QUEEN));
+    move_list.add_move(Move(from, to, PROMOTION, KNIGHT));
+    move_list.add_move(Move(from, to, PROMOTION, ROOK));
+    move_list.add_move(Move(from, to, PROMOTION, BISHOP));
     bb &= bb - 1; // clear lsb
   }
 
   bb = (pawnsOn7 & ~FILE_A) << (D + WEST) &
-       enemyOccupied; // Generate captures to the left for promotion
+       target; // Generate captures to the left for promotion
   while (bb) {
-    Square to = getLeastSquare(bb);
+    Square to = get_least_square(bb);
     Square from = static_cast<Square>(to - D - WEST);
-    moveList.addMove(Move(from, to, PROMOTION, QUEEN));
-    moveList.addMove(Move(from, to, PROMOTION, KNIGHT));
-    moveList.addMove(Move(from, to, PROMOTION, ROOK));
-    moveList.addMove(Move(from, to, PROMOTION, BISHOP));
+    move_list.add_move(Move(from, to, PROMOTION, QUEEN));
+    move_list.add_move(Move(from, to, PROMOTION, KNIGHT));
+    move_list.add_move(Move(from, to, PROMOTION, ROOK));
+    move_list.add_move(Move(from, to, PROMOTION, BISHOP));
     bb &= bb - 1; // clear lsb
   }
 
   bb = (pawnsOn7 & ~FILE_H) << (D + EAST) &
-       enemyOccupied; // Generate captures to the right for promotion
+       target; // Generate captures to the right for promotion
   while (bb) {
-    Square to = getLeastSquare(bb);
+    Square to = get_least_square(bb);
     Square from = static_cast<Square>(to - D - EAST);
-    moveList.addMove(Move(from, to, PROMOTION, QUEEN));
-    moveList.addMove(Move(from, to, PROMOTION, KNIGHT));
-    moveList.addMove(Move(from, to, PROMOTION, ROOK));
-    moveList.addMove(Move(from, to, PROMOTION, BISHOP));
+    move_list.add_move(Move(from, to, PROMOTION, QUEEN));
+    move_list.add_move(Move(from, to, PROMOTION, KNIGHT));
+    move_list.add_move(Move(from, to, PROMOTION, ROOK));
+    move_list.add_move(Move(from, to, PROMOTION, BISHOP));
     bb &= bb - 1; // clear lsb
   }
 }
 
 template <Color C>
-void generateEnPassant(Bitboard pawns, Square enPassantSquare, MoveList &moveList) {
-  Bitboard attackers = attacks::pawn_attackers<~C>(enPassantSquare) & pawns; //flip color since the enemy getting attacked
+void gen_en_passant(Bitboard pawns, Square ep_square, MoveList &move_list) {
+  Bitboard attackers = attacks::pawn_attackers<~C>(ep_square) &
+                       pawns; // flip color since the enemy getting attacked
   while (attackers) {
-    Square from = getLeastSquare(attackers);
-    moveList.addMove(Move(from, enPassantSquare, ENPASSANT));
-    attackers &= attackers-1;
+    Square from = get_least_square(attackers);
+    move_list.add_move(Move(from, ep_square, ENPASSANT));
+    attackers &= attackers - 1;
   }
 }
 
-void generateKnightMoves(Bitboard knights, Bitboard friendlyOccupied,
-                         MoveList &moveList) {
+void gen_knight_moves(Bitboard knights, Bitboard blocks, MoveList &move_list) {
   Bitboard bb = knights;
   while (bb) {
-    Square from = getLeastSquare(bb);
-    Bitboard attacks = attacks::knight_attacks(from) & ~friendlyOccupied;
+    Square from = get_least_square(bb);
+    Bitboard attacks = attacks::knight_attacks(from) & ~blocks;
     while (attacks) {
-      Square to = getLeastSquare(attacks);
-      moveList.addMove(Move(from, to));
+      Square to = get_least_square(attacks);
+      move_list.add_move(Move(from, to));
       attacks &= attacks - 1; // clear lsb
     }
     bb &= bb - 1; // clear lsb
@@ -108,42 +108,42 @@ void generateKnightMoves(Bitboard knights, Bitboard friendlyOccupied,
 }
 
 template <Piece P>
-void generateSliderMoves(Bitboard pieces, Bitboard friendlyOccupied,
-                         Bitboard occupied, MoveList &moveList) {
+void gen_slider_moves(Bitboard pieces, Bitboard blocks, Bitboard occupied,
+                      MoveList &move_list) {
   while (pieces) {
-    Square cur = getLeastSquare(pieces);
+    Square cur = get_least_square(pieces);
   }
 }
 
-void generateKingMoves(Bitboard king, Bitboard friendlyOccupied,
-                       MoveList &moveList) {
+void gen_king_moves(Bitboard king, Bitboard blocks, MoveList &move_list) {
   Bitboard bb = king;
-  Square from = getLeastSquare(bb);
-  Bitboard attacks = attacks::king_attacks(from) & ~friendlyOccupied;
+  Square from = get_least_square(bb);
+  Bitboard attacks = attacks::king_attacks(from) & ~blocks;
   while (attacks) {
-    Square to = getLeastSquare(attacks);
-    moveList.addMove(Move(from, to));
+    Square to = get_least_square(attacks);
+    move_list.add_move(Move(from, to));
     attacks &= attacks - 1; // clear lsb
   }
 }
 
-template <Color C> void generatePinnedMoves(Board &b, MoveList &moveList) {
+template <Color C> void gen_pinned_moves(Board &b, MoveList &move_list) {
   constexpr Direction D = (C == WHITE) ? NORTH : SOUTH;
   constexpr bool isWhite = C == WHITE;
   Bitboard pinners = b.get_pinners();
-  Square kingSquare = getLeastSquare(b.get_pieces<KING>(C));
+  Square kingSquare = get_least_square(b.get_pieces<KING>(C));
   while (pinners) { // get all pinned piece moves
-    Square attacker = getLeastSquare(pinners);
+    Square attacker = get_least_square(pinners);
     Bitboard pinRay =
         attacks::from_to_bb(kingSquare, attacker) | 1ULL << attacker;
-    Square pinnedPiece = getLeastSquare(pinRay & b.get_pinned());
+    Square pinnedPiece = get_least_square(pinRay & b.get_pinned());
 
-    Piece piece = pieceTypeToPiece(b.get_piece_map(pinnedPiece));
+    Piece piece = piece_type_to_piece(b.get_piece_map(pinnedPiece));
     if (piece == PAWN) {
-      
+
       Bitboard pawnBB = 1ULL << pinnedPiece;
-      if (((1ULL << b.get_en_passant_square()) & pinRay) != 0) { //enPassantable
-        generateEnPassant<C>(pawnBB, b.get_en_passant_square(), moveList);
+      if (((1ULL << b.get_en_passant_square()) & pinRay) !=
+          0) { // enPassantable
+        gen_en_passant<C>(pawnBB, b.get_en_passant_square(), move_list);
       }
       Bitboard pawnMoves = ((pawnBB << (D + EAST)) | (pawnBB << (D + WEST))) &
                            attacker; // attacking squares
@@ -152,14 +152,14 @@ template <Color C> void generatePinnedMoves(Board &b, MoveList &moveList) {
         pawnMoves |= pawnBB << 2 * D;
       pawnMoves &= pinRay; // only keep moves along pin ray
       while (pawnMoves) {
-        Square toSquare = getLeastSquare(pawnMoves);
+        Square toSquare = get_least_square(pawnMoves);
         if ((pawnBB & (isWhite ? RANK_7 : RANK_2)) != 0) { // promoting
-          moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, QUEEN));
-          moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, KNIGHT));
-          moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, ROOK));
-          moveList.addMove(Move(pinnedPiece, toSquare, PROMOTION, BISHOP));
+          move_list.add_move(Move(pinnedPiece, toSquare, PROMOTION, QUEEN));
+          move_list.add_move(Move(pinnedPiece, toSquare, PROMOTION, KNIGHT));
+          move_list.add_move(Move(pinnedPiece, toSquare, PROMOTION, ROOK));
+          move_list.add_move(Move(pinnedPiece, toSquare, PROMOTION, BISHOP));
         } else {
-          moveList.addMove(Move(pinnedPiece, toSquare));
+          move_list.add_move(Move(pinnedPiece, toSquare));
         }
         pawnMoves &= pawnMoves - 1;
       }
@@ -181,7 +181,7 @@ template <Color C> void generatePinnedMoves(Board &b, MoveList &moveList) {
         break;
       }
       while (pinRay) {
-        moveList.addMove(Move(pinnedPiece, getLeastSquare(pinRay)));
+        move_list.add_move(Move(pinnedPiece, get_least_square(pinRay)));
         pinRay &= pinRay - 1;
       }
     }
@@ -189,7 +189,7 @@ template <Color C> void generatePinnedMoves(Board &b, MoveList &moveList) {
 }
 
 // generates the attack mask for all squares attacked by pieces
-template <Color C> Bitboard generateAttackMask(Board &b) {
+template <Color C> Bitboard gen_attack_mask(Board &b) {
   constexpr Direction D = C == WHITE ? NORTH : SOUTH;
   Bitboard mask = 0;
   Bitboard cur = b.get_pieces<PAWN>(C);
@@ -198,45 +198,45 @@ template <Color C> Bitboard generateAttackMask(Board &b) {
 
   cur = b.get_pieces<KNIGHT>(C);
   while (cur) {
-    mask |= attacks::knight_attacks(getLeastSquare(cur));
+    mask |= attacks::knight_attacks(get_least_square(cur));
     cur &= cur - 1;
   }
 
   cur = b.get_pieces<BISHOP>(C);
   while (cur) {
-    mask |= attacks::sliding_attacks<BISHOP>(getLeastSquare(cur),
-                                               b.get_occupied());
+    mask |=
+        attacks::sliding_attacks<BISHOP>(get_least_square(cur), b.get_occupied());
     cur &= cur - 1;
   }
 
   cur = b.get_pieces<ROOK>(C);
   while (cur) {
     mask |=
-        attacks::sliding_attacks<ROOK>(getLeastSquare(cur), b.get_occupied());
+        attacks::sliding_attacks<ROOK>(get_least_square(cur), b.get_occupied());
     cur &= cur - 1;
   }
 
   cur = b.get_pieces<QUEEN>(C);
   while (cur) {
     mask |=
-        attacks::sliding_attacks<QUEEN>(getLeastSquare(cur), b.get_occupied());
+        attacks::sliding_attacks<QUEEN>(get_least_square(cur), b.get_occupied());
     cur &= cur - 1;
   }
 
-  mask |= attacks::king_attacks(getLeastSquare(b.get_pieces<KING>(C)));
+  mask |= attacks::king_attacks(get_least_square(b.get_pieces<KING>(C)));
   return mask;
 }
 
-template <Color C> void generateMoves(Board &b, MoveList &moveList) {
-  moveList.count = 0;
-  Square kingSquare = getLeastSquare(b.get_pieces<KING>(C));
-  Bitboard attackedSquares = generateAttackMask<~C>(b);
+template <Color C> void gen_moves(Board &b, MoveList &move_list) {
+  move_list.count = 0;
+  Square kingSquare = get_least_square(b.get_pieces<KING>(C));
+  Bitboard attackedSquares = gen_attack_mask<~C>(b);
   b.refresh_checks_pins<C>();
   if (b.get_checkers() == 0) { // no checkers
-    generatePinnedMoves<C>(b, moveList);
+    gen_pinned_moves<C>(b, move_list);
     Bitboard nonPinned = ~b.get_pinned();
-    generatePawnMoves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_occupied(~C),
-                         b.get_occupied(), moveList);
+    gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_occupied(~C),
+                      b.get_occupied(), move_list);
 
   } else if ((b.get_checkers() & (b.get_checkers() - 1)) == 0) { // one checker
 
@@ -244,11 +244,11 @@ template <Color C> void generateMoves(Board &b, MoveList &moveList) {
   }
 }
 
-void generateMoves(Board &b, MoveList &moveList) {
+void gen_moves(Board &b, MoveList &move_list) {
   if (b.get_is_white()) {
-  return generateMoves<WHITE>(b, moveList);
+    return gen_moves<WHITE>(b, move_list);
   } else {
-  return generateMoves<BLACK>(b, moveList);
+    return gen_moves<BLACK>(b, move_list);
   }
 }
 } // namespace citterfish

@@ -9,7 +9,7 @@ namespace citterfish {
 
 using Key = std::uint64_t;
 using Bitboard = std::uint64_t;
-inline void printBB(Bitboard bb) {
+inline void print_bb(Bitboard bb) {
   std::cout << "\nBitboard: " << bb << std::endl;
   for (int rank = 7; rank >= 0; --rank) {
     for (int file = 0; file < 8; ++file) {
@@ -39,7 +39,7 @@ enum PieceType : uint8_t {
   B_KING,
   NO_PIECE_TYPE
 };
-inline char pieceToChar(Piece piece, Color color) {
+inline char piece_to_char(Piece piece, Color color) {
   switch (piece) {
   case PAWN:
     return color == WHITE ? 'P' : 'p';
@@ -57,23 +57,24 @@ inline char pieceToChar(Piece piece, Color color) {
     return '?'; // Should never happen
   }
 }
-inline Color pieceTypeToColor(PieceType pt) {
+inline Color piece_type_to_color(PieceType pt) {
   return static_cast<Color>(pt / 6);
 }
-inline Piece pieceTypeToPiece(PieceType pt) {
+inline Piece piece_type_to_piece(PieceType pt) {
   return static_cast<Piece>(pt % 6);
 }
-inline char pieceTypeToChar(PieceType pieceType) {
-  return pieceToChar(pieceTypeToPiece(pieceType), pieceTypeToColor(pieceType));
+inline char piece_type_to_char(PieceType pieceType) {
+  return piece_to_char(piece_type_to_piece(pieceType),
+                       piece_type_to_color(pieceType));
 }
-inline Color charToColor(char c) {
+inline Color char_to_color(char c) {
   if (std::islower(c))
     return BLACK;
   else if (std::isupper(c))
     return WHITE;
   return BAD_COLOR;
 }
-inline Piece charToPiece(char c) {
+inline Piece char_to_piece(char c) {
   switch (std::tolower(c)) {
   case 'p':
     return PAWN;
@@ -90,7 +91,7 @@ inline Piece charToPiece(char c) {
   }
   return BAD_PIECE;
 }
-inline PieceType pieceToPieceType(Piece piece, Color color) {
+inline PieceType piece_to_piece_type(Piece piece, Color color) {
   return static_cast<PieceType>(color * 6 + piece);
 }
 
@@ -116,7 +117,7 @@ enum Square : std::uint8_t {
     no_square
 };
 // clang-format on
-inline Square squareFromString(const std::string &square) {
+inline Square string_to_square(const std::string &square) {
   if (square.length() != 2) {
     return no_square;
   }
@@ -129,7 +130,7 @@ inline Square squareFromString(const std::string &square) {
   int rank = rankChar - '1';
   return static_cast<Square>(rank * 8 + file);
 }
-inline std::string squareToString(Square square) {
+inline std::string square_to_string(Square square) {
   if (square == 64) {
     return "-";
   }
@@ -143,8 +144,13 @@ inline Square &operator++(Square &square) {
   square = static_cast<Square>(static_cast<int>(square) + 1);
   return square;
 }
-inline Square getLeastSquare(Bitboard bb) {
+inline Square get_least_square(Bitboard bb) {
   return static_cast<Square>(std::countr_zero(bb));
+}
+inline Square pop_least_square(Bitboard &bb) {
+  Square s = get_least_square(bb);
+  bb &= bb - 1;
+  return s;
 }
 enum Direction : int8_t { NORTH = 8, SOUTH = -8, EAST = 1, WEST = -1 };
 constexpr Square operator+(Square square, Direction direction) {
@@ -180,7 +186,7 @@ enum Ranks : Bitboard {
 enum MoveType : uint8_t { REGULAR, ENPASSANT, CASTLE, PROMOTION };
 class Move {
 private:
-  uint16_t moveData;
+  uint16_t move_data;
   // bits 0-5: from square (6 bits)
   // bits 6-11: to square (6 bits)
   // bits 12-13: promotion piece (2 bits)
@@ -189,22 +195,22 @@ private:
 public:
   Move() = default;
   Move(Square from, Square to, MoveType type = REGULAR,
-       Piece promotionPiece = KNIGHT) {
-    moveData = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6) |
-               ((static_cast<uint16_t>(promotionPiece) - 1) << 12) |
-               (static_cast<uint16_t>(type) << 14);
+       Piece promotion_piece = KNIGHT) {
+    move_data = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6) |
+                ((static_cast<uint16_t>(promotion_piece) - 1) << 12) |
+                (static_cast<uint16_t>(type) << 14);
   }
-  constexpr Square getFromSquare() const {
-    return static_cast<Square>(moveData & 0x3F);
+  constexpr Square get_from_square() const {
+    return static_cast<Square>(move_data & 0x3F);
   }
-  constexpr Square getToSquare() const {
-    return static_cast<Square>((moveData >> 6) & 0x3F);
+  constexpr Square get_to_square() const {
+    return static_cast<Square>((move_data >> 6) & 0x3F);
   }
-  constexpr MoveType getMoveType() const {
-    return static_cast<MoveType>((moveData >> 14) & 0x03);
+  constexpr MoveType get_move_type() const {
+    return static_cast<MoveType>((move_data >> 14) & 0x03);
   }
-  constexpr Piece getPromotionPiece() const {
-    return static_cast<Piece>(((moveData >> 12) & 0x03) + 1);
+  constexpr Piece get_promotion_piece() const {
+    return static_cast<Piece>(((move_data >> 12) & 0x03) + 1);
   }
 };
 constexpr uint8_t MAX_MOVES = 224;
@@ -217,7 +223,7 @@ class PRNG {
 
 public:
   constexpr explicit PRNG(uint64_t seed) : state(seed) {}
-  constexpr uint64_t getState() { return state; };
+  constexpr uint64_t get_state() { return state; };
   constexpr uint64_t next() {
     state ^= (state >> 12);
     state ^= (state << 25);

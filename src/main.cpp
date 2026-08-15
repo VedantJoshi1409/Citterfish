@@ -6,17 +6,18 @@
 
 int main() {
   using namespace citterfish;
-  zobrist::initializeZobristKeys();
-  attacks::initialize_attacks();
+  zobrist::init_zobrist();
+  attacks::init_attacks();
   Board board;
   std::cout << board << std::endl;
-  MoveList moveList;
-  generateMoves(board, moveList);
-  std::cout << static_cast<uint16_t>(moveList.count) << " moves generated."<< std::endl; 
-  for (uint8_t i = 0; i < moveList.count; ++i) {
-    const Move &move = moveList.moves[i];
-    std::cout << squareToString(move.getFromSquare()) << " -> "
-              << squareToString(move.getToSquare()) << std::endl;
+  MoveList move_list;
+  gen_moves(board, move_list);
+  std::cout << static_cast<uint16_t>(move_list.count) << " moves generated."
+            << std::endl;
+  for (uint8_t i = 0; i < move_list.count; ++i) {
+    const Move &move = move_list.moves[i];
+    std::cout << square_to_string(move.get_from_square()) << " -> "
+              << square_to_string(move.get_to_square()) << std::endl;
   }
 
   return 0;
