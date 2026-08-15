@@ -8,7 +8,7 @@ int main() {
   using namespace citterfish;
   zobrist::init_zobrist();
   attacks::init_attacks();
-  Board board;
+  Board board("rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 1");
   std::cout << board << std::endl;
   MoveList move_list;
   gen_moves(board, move_list);
@@ -17,7 +17,8 @@ int main() {
   for (uint8_t i = 0; i < move_list.count; ++i) {
     const Move &move = move_list.moves[i];
     std::cout << square_to_string(move.get_from_square()) << " -> "
-              << square_to_string(move.get_to_square()) << std::endl;
+              << square_to_string(move.get_to_square()) << ": "
+              << static_cast<int>(move.get_move_type()) << std::endl;
   }
 
   return 0;

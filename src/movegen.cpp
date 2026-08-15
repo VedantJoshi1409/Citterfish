@@ -106,6 +106,11 @@ void gen_slider_moves(Bitboard pieces, Bitboard blocks, Bitboard occupied,
                       MoveList &move_list) {
   while (pieces) {
     Square cur = pop_least_square(pieces);
+    Bitboard attacks = attacks::sliding_attacks<P>(cur, occupied) & ~blocks;
+    while (attacks) {
+      Square to = pop_least_square(attacks);
+      move_list.add_move(Move(cur, to));
+    }
   }
 }
 
@@ -223,9 +228,31 @@ template <Color C> void gen_moves(Board &b, MoveList &move_list) {
     Bitboard nonPinned = ~b.get_pinned();
     gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_occupied(~C),
                       ~b.get_occupied(), move_list);
+    gen_knight_moves(b.get_pieces<KNIGHT>(C) & nonPinned, b.get_occupied(C),
+                     move_list);
+    gen_slider_moves<ROOK>(b.get_pieces<ROOK>(C) & nonPinned, b.get_occupied(C),
+                           b.get_occupied(), move_list);
+    gen_slider_moves<BISHOP>(b.get_pieces<BISHOP>(C) & nonPinned,
+                             b.get_occupied(C), b.get_occupied(), move_list);
+    gen_slider_moves<QUEEN>(b.get_pieces<QUEEN>(C) & nonPinned,
+                            b.get_occupied(C), b.get_occupied(), move_list);
+    gen_king_moves(b.get_pieces<KING>(C), b.get_occupied(C) | attackedSquares,
+                   move_list);
 
   } else if ((b.get_checkers() & (b.get_checkers() - 1)) == 0) { // one checker
-
+    Bitboard nonPinned = ~b.get_pinned();
+    gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_occupied(~C),
+                      ~b.get_occupied(), move_list);
+    gen_knight_moves(b.get_pieces<KNIGHT>(C) & nonPinned, b.get_occupied(C),
+                     move_list);
+    gen_slider_moves<ROOK>(b.get_pieces<ROOK>(C) & nonPinned, b.get_occupied(C),
+                           b.get_occupied(), move_list);
+    gen_slider_moves<BISHOP>(b.get_pieces<BISHOP>(C) & nonPinned,
+                             b.get_occupied(C), b.get_occupied(), move_list);
+    gen_slider_moves<QUEEN>(b.get_pieces<QUEEN>(C) & nonPinned,
+                            b.get_occupied(C), b.get_occupied(), move_list);
+    gen_king_moves(b.get_pieces<KING>(C), b.get_occupied(C) | attackedSquares,
+                   move_list);
   } else { // two checkers
   }
 }

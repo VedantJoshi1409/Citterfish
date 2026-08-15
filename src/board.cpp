@@ -53,7 +53,7 @@ Board::Board(const std::string &fen) {
 }
 
 Board::Board()
-    : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0") {}
+    : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") {}
 
 void Board::refresh_piece_map() {
   piece_map.fill(NO_PIECE_TYPE);
