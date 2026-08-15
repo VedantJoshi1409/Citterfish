@@ -8,7 +8,7 @@ int main() {
   using namespace citterfish;
   zobrist::init_zobrist();
   attacks::init_attacks();
-  Board board("rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 1");
+  Board board("3k4/8/8/K1Pp3r/8/8/8/8 w - d6 0 1");
   std::cout << board << std::endl;
   MoveList move_list;
   gen_moves(board, move_list);

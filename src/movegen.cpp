@@ -240,20 +240,31 @@ template <Color C> void gen_moves(Board &b, MoveList &move_list) {
                    move_list);
 
   } else if ((b.get_checkers() & (b.get_checkers() - 1)) == 0) { // one checker
+    Square checker = static_cast<Square>(std::countr_zero(b.get_checkers()));
+    Bitboard legal =
+        attacks::from_to_bb(checker, static_cast<Square>(std::countr_zero(
+                                         b.get_pieces<KING>(C)))) |
+        b.get_checkers();
+
     Bitboard nonPinned = ~b.get_pinned();
-    gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_occupied(~C),
-                      ~b.get_occupied(), move_list);
-    gen_knight_moves(b.get_pieces<KNIGHT>(C) & nonPinned, b.get_occupied(C),
-                     move_list);
-    gen_slider_moves<ROOK>(b.get_pieces<ROOK>(C) & nonPinned, b.get_occupied(C),
-                           b.get_occupied(), move_list);
-    gen_slider_moves<BISHOP>(b.get_pieces<BISHOP>(C) & nonPinned,
-                             b.get_occupied(C), b.get_occupied(), move_list);
-    gen_slider_moves<QUEEN>(b.get_pieces<QUEEN>(C) & nonPinned,
-                            b.get_occupied(C), b.get_occupied(), move_list);
+    gen_pawn_moves<C>(
+        b.get_pieces<PAWN>(C) & nonPinned, legal, legal ^ b.get_checkers(),
+        move_list); // Only captures are on legal squares and only empty squares
+                    // are the legal ones minus the checker
+    gen_knight_moves(b.get_pieces<KNIGHT>(C) & nonPinned, ~legal,
+                     move_list); // knight is blocked by any non legal square
+    gen_slider_moves<ROOK>(
+        b.get_pieces<ROOK>(C) & nonPinned, ~legal, b.get_occupied(),
+        move_list); // sliders are blocked by any non legal sqaure
+    gen_slider_moves<BISHOP>(b.get_pieces<BISHOP>(C) & nonPinned, ~legal,
+                             b.get_occupied(), move_list);
+    gen_slider_moves<QUEEN>(b.get_pieces<QUEEN>(C) & nonPinned, ~legal,
+                            b.get_occupied(), move_list);
+    gen_king_moves(b.get_pieces<KING>(C),
+                   b.get_occupied(C) | attackedSquares | ~legal, move_list);
+  } else { // two checkers
     gen_king_moves(b.get_pieces<KING>(C), b.get_occupied(C) | attackedSquares,
                    move_list);
-  } else { // two checkers
   }
 }
 
