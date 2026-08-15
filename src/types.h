@@ -144,15 +144,26 @@ inline Square &operator++(Square &square) {
   square = static_cast<Square>(static_cast<int>(square) + 1);
   return square;
 }
-inline Square get_least_square(Bitboard bb) {
+inline Square least_square(Bitboard bb) {
   return static_cast<Square>(std::countr_zero(bb));
 }
 inline Square pop_least_square(Bitboard &bb) {
-  Square s = get_least_square(bb);
+  Square s = least_square(bb);
   bb &= bb - 1;
   return s;
 }
-enum Direction : int8_t { NORTH = 8, SOUTH = -8, EAST = 1, WEST = -1 };
+enum Direction : int8_t {
+  NORTH = 8,
+  SOUTH = -8,
+  EAST = 1,
+  WEST = -1,
+  NORTH_EAST = NORTH + EAST,
+  NORTH_WEST = NORTH + WEST,
+  SOUTH_EAST = SOUTH + EAST,
+  SOUTH_WEST = SOUTH + WEST,
+  DOUBLE_NORTH = 2 * NORTH,
+  DOUBLE_SOUTH = 2 * SOUTH
+};
 constexpr Square operator+(Square square, Direction direction) {
   return static_cast<Square>(static_cast<int>(square) +
                              static_cast<int>(direction));
@@ -160,6 +171,22 @@ constexpr Square operator+(Square square, Direction direction) {
 constexpr Square operator-(Square square, Direction direction) {
   return static_cast<Square>(static_cast<int>(square) -
                              static_cast<int>(direction));
+}
+constexpr Direction operator+(Direction d1, Direction d2) {
+  return static_cast<Direction>(static_cast<int>(d1) + static_cast<int>(d2));
+}
+template <Direction D> constexpr Bitboard shift(Bitboard bb) {
+  if constexpr (D < 0) {
+    return bb >> -D;
+  } else {
+    return bb << D;
+  }
+}
+template <Color C> constexpr Direction pawn_dir() {
+  if constexpr (C == WHITE)
+    return NORTH;
+  else
+    return SOUTH;
 }
 
 enum Files : Bitboard {

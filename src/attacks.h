@@ -15,6 +15,16 @@ inline std::array<std::array<Bitboard, 64>, 64> from_to_bb{};
 
 void init_attacks();
 
+template <Color C> inline Bitboard pawn_attacks(Bitboard pawns) {
+  if constexpr (C == WHITE) {
+    return ((pawns & ~FILE_A) << (NORTH + WEST)) |
+           ((pawns & ~FILE_H) << (NORTH + WEST));
+  } else {
+    return ((pawns & ~FILE_A) >> -(SOUTH + WEST)) |
+           ((pawns & ~FILE_H) >> -(SOUTH + WEST));
+  }
+}
+
 inline Bitboard knight_attacks(Square square) {
   return detail::knight_attacks[static_cast<int>(square)];
 }
