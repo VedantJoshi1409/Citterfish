@@ -89,6 +89,32 @@ void gen_en_passant(Bitboard pawns, Square ep_square, MoveList &move_list) {
   }
 }
 
+template <Color C>
+void gen_en_passant(Bitboard pawns, Bitboard king, Bitboard orthoAttackers, Bitboard occupied, Square ep_square, MoveList &move_list) {
+  constexpr Direction D = pawn_dir<C>();
+  Bitboard attackers = attacks::pawn_attackers<~C>(ep_square) &
+                       pawns; // flip color since the enemy getting attacked
+  if ((attackers & (attackers-1)) == 0) { //check edge case
+    constexpr Bitboard epRank = C == WHITE ? RANK_5 : RANK_4; 
+    if ((king & epRank) != 0 && (orthoAttackers & epRank) != 0) {      
+      occupied ^= attackers | (1ULL << (ep_square - D));
+      if ((attacks::sliding_attacks<ROOK>(least_square(king), occupied) & (orthoAttackers & epRank)) != 0) {
+        //king is on ep rank and without the pawns in the way it would be in check
+        return;
+      }
+    } else {
+      Square from = least_square(attackers);
+      move_list.add_move(Move(from,ep_square, ENPASSANT));
+    }
+  } else {
+  while (attackers) { //no edge case
+    Square from = pop_least_square(attackers);
+    move_list.add_move(Move(from, ep_square, ENPASSANT));
+  }
+}
+}
+
+
 void gen_knight_moves(Bitboard knights, Bitboard blocks, MoveList &move_list) {
   Bitboard bb = knights;
   while (bb) {
@@ -228,6 +254,7 @@ template <Color C> void gen_moves(Board &b, MoveList &move_list) {
     Bitboard nonPinned = ~b.get_pinned();
     gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_occupied(~C),
                       ~b.get_occupied(), move_list);
+    gen_en_passant<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces<KING>(C), b.get_pieces<ROOK>(~C) | b.get_pieces<QUEEN>(~C), b.get_occupied(), b.get_en_passant_square(), move_list);
     gen_knight_moves(b.get_pieces<KNIGHT>(C) & nonPinned, b.get_occupied(C),
                      move_list);
     gen_slider_moves<ROOK>(b.get_pieces<ROOK>(C) & nonPinned, b.get_occupied(C),
@@ -248,9 +275,13 @@ template <Color C> void gen_moves(Board &b, MoveList &move_list) {
 
     Bitboard nonPinned = ~b.get_pinned();
     gen_pawn_moves<C>(
-        b.get_pieces<PAWN>(C) & nonPinned, legal, legal ^ b.get_checkers(),
+        b.get_pieces<PAWN>(C) & nonPinned, legal, legal & ~b.get_checkers(),
         move_list); // Only captures are on legal squares and only empty squares
                     // are the legal ones minus the checker
+    constexpr Direction D = C == WHITE ? NORTH: SOUTH;
+    if (b.get_en_passant_square() - D == checker) { //can only en passant in check if the checker is the double pawn push
+          gen_en_passant<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces<KING>(C), b.get_pieces<ROOK>(~C) | b.get_pieces<QUEEN>(~C), b.get_occupied(), b.get_en_passant_square(), move_list);
+    }
     gen_knight_moves(b.get_pieces<KNIGHT>(C) & nonPinned, ~legal,
                      move_list); // knight is blocked by any non legal square
     gen_slider_moves<ROOK>(
