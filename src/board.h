@@ -11,26 +11,35 @@
 #include <string>
 
 namespace citterfish {
+struct StateInfo {
+  //copied
+  Key zobrist_hash;
+  uint16_t repeatAmount;
+  uint8_t castling_rights; // First digit is K then Q then k then q
+  uint16_t halfmove_clock;
+  Square en_passant_square;
+  Piece captured;
+
+  //refreshed
+  Bitboard checkers;
+  Bitboard pinned_pieces;
+  Bitboard pinners;
+
+  StateInfo *prevSt;
+
+  StateInfo() = default;
+};
 
 class Board {
 
 private:
-  // updated
   std::array<std::array<Bitboard, 6>, 2> pieces;
   std::array<Bitboard, 2> occupied;
   Bitboard all_occupied;
-  uint8_t castling_rights; // First digit is K then Q then k then q
   bool is_white;
-  Square en_passant_square;
-  uint16_t halfmove_clock;
   uint16_t fullmove_clock;
-  Key zobrist_hash;
   std::array<PieceType, 64> piece_map;
-
-  // refreshed
-  Bitboard checkers;
-  Bitboard pinned_pieces;
-  Bitboard pinners;
+  StateInfo *st;
 
 public:
   Board(const std::string &fen);
@@ -44,16 +53,16 @@ public:
   }
   PieceType get_piece_map(Square square) const { return piece_map[square]; }
   bool get_is_white() const { return is_white; }
-  uint8_t get_castling_rights() const { return castling_rights; }
-  Square get_en_passant_square() const { return en_passant_square; }
-  uint16_t get_halfmove_clock() const { return halfmove_clock; }
+  uint8_t get_castling_rights() const { return st->castling_rights; }
+  Square get_en_passant_square() const { return st->en_passant_square; }
+  uint16_t get_halfmove_clock() const { return st->halfmove_clock; }
   uint16_t get_fullmove_clock() const { return fullmove_clock; }
-  Key get_zobrist_hash() const { return zobrist_hash; }
+  Key get_zobrist_hash() const { return st->zobrist_hash; }
   Bitboard get_occupied(Color color) const { return occupied[color]; }
   Bitboard get_occupied() const { return all_occupied; }
-  Bitboard get_checkers() const { return checkers; }
-  Bitboard get_pinned() const { return pinned_pieces; }
-  Bitboard get_pinners() const { return pinners; }
+  Bitboard get_checkers() const { return st->checkers; }
+  Bitboard get_pinned() const { return st->pinned_pieces; }
+  Bitboard get_pinners() const { return st->pinners; }
 
   template <Color us> void refresh_checks_pins() {
     constexpr Color them = ~us;
@@ -90,9 +99,9 @@ public:
       }
       king_attackers &= king_attackers - 1;
     }
-    checkers = cur_checkers;
-    pinned_pieces = cur_pinned;
-    pinners = cur_pinners;
+    st->checkers = cur_checkers;
+    st->pinned_pieces = cur_pinned;
+    st->pinners = cur_pinners;
   }
 
   void refresh_piece_map();
