@@ -30,16 +30,16 @@ Board::Board(const std::string &fen) {
   for (; i < fen.length() && fen.at(i) != ' '; i++) {
     switch (fen.at(i)) {
     case 'K':
-      castling_rights |= WhiteKingSide;
+      castling_rights |= WHITE_KINGSIDE;
       break;
     case 'Q':
-      castling_rights |= WhiteQueenSide;
+      castling_rights |= WHITE_QUEENSIDE;
       break;
     case 'k':
-      castling_rights |= BlackKingSide;
+      castling_rights |= BLACK_KINGSIDE;
       break;
     case 'q':
-      castling_rights |= BlackQueenSide;
+      castling_rights |= BLACK_QUEENSIDE;
       break;
     }
   }
@@ -134,13 +134,13 @@ std::string Board::to_fen() const {
   if (castling_rights == 0) {
     fen += '-';
   } else {
-    if (castling_rights & WhiteKingSide)
+    if (castling_rights & WHITE_KINGSIDE)
       fen += 'K';
-    if (castling_rights & WhiteQueenSide)
+    if (castling_rights & WHITE_QUEENSIDE)
       fen += 'Q';
-    if (castling_rights & BlackKingSide)
+    if (castling_rights & BLACK_KINGSIDE)
       fen += 'k';
-    if (castling_rights & BlackQueenSide)
+    if (castling_rights & BLACK_QUEENSIDE)
       fen += 'q';
   }
   fen += ' ';
@@ -168,13 +168,13 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
   }
   output += std::string((b.get_is_white() ? "White" : "Black")) + " to move\n";
   std::string castle{};
-  if ((b.get_castling_rights() & WhiteKingSide) != 0)
+  if ((b.get_castling_rights() & WHITE_KINGSIDE) != 0)
     castle += 'K';
-  if ((b.get_castling_rights() & WhiteQueenSide) != 0)
+  if ((b.get_castling_rights() & WHITE_QUEENSIDE) != 0)
     castle += 'Q';
-  if ((b.get_castling_rights() & BlackKingSide) != 0)
+  if ((b.get_castling_rights() & BLACK_KINGSIDE) != 0)
     castle += 'k';
-  if ((b.get_castling_rights() & BlackQueenSide) != 0)
+  if ((b.get_castling_rights() & BLACK_QUEENSIDE) != 0)
     castle += 'q';
   if (castle.empty())
     castle = '-';

@@ -97,10 +97,20 @@ inline PieceType piece_to_piece_type(Piece piece, Color color) {
 
 enum CastlingRight : uint8_t {
   None = 0,
-  WhiteKingSide = 1 << 0,
-  WhiteQueenSide = 1 << 1,
-  BlackKingSide = 1 << 2,
-  BlackQueenSide = 1 << 3
+  WHITE_KINGSIDE = 1 << 0,
+  WHITE_QUEENSIDE = 1 << 1,
+  BLACK_KINGSIDE = 1 << 2,
+  BLACK_QUEENSIDE = 1 << 3
+};
+enum CastlingBB : Bitboard {
+  WHITE_KINGSIDE_EMPTY = 96ULL,
+  WHITE_QUEENSIDE_EMPTY = 14ULL,
+  BLACK_KINGSIDE_EMPTY = 6917529027641081856ULL,
+  BLACK_QUEENSIDE_EMPTY = 1008806316530991104ULL,
+  WHITE_KINGSIDE_ATTACKED = 96ULL,
+  WHITE_QUEENSIDE_ATTACKED = 12ULL,
+  BLACK_KINGSIDE_ATTACKED = 6917529027641081856ULL,
+  BLACK_QUEENSIDE_ATTACKED = 864691128455135232ULL
 };
 
 // clang-format off
