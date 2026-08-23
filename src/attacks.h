@@ -5,12 +5,12 @@
 
 namespace citterfish::attacks {
 namespace detail {
-inline std::array<Bitboard, 64> knight_attacks;
-inline std::array<Bitboard, 64> king_attacks;
-inline std::array<std::array<Bitboard, 64>, 2> pawn_attackers;
-inline std::array<Bitboard, 64> ortho_rays;
-inline std::array<Bitboard, 64> diag_rays;
-inline std::array<std::array<Bitboard, 64>, 64> from_to_bb{};
+inline std::array<Bitboard, 64> knightAttacks;
+inline std::array<Bitboard, 64> kingAttacks;
+inline std::array<std::array<Bitboard, 64>, 2> pawnAttackers;
+inline std::array<Bitboard, 64> orthoRays;
+inline std::array<Bitboard, 64> diagRays;
+inline std::array<std::array<Bitboard, 64>, 64> fromToBB{};
 } // namespace detail
 
 void init_attacks();
@@ -26,23 +26,23 @@ template <Color C> inline Bitboard pawn_attacks(Bitboard pawns) {
 }
 
 inline Bitboard knight_attacks(Square square) {
-  return detail::knight_attacks[static_cast<int>(square)];
+  return detail::knightAttacks[static_cast<int>(square)];
 }
 
 inline Bitboard king_attacks(Square square) {
-  return detail::king_attacks[static_cast<int>(square)];
+  return detail::kingAttacks[static_cast<int>(square)];
 }
 
 template <Color C> inline Bitboard pawn_attackers(Square square) {
-  return detail::pawn_attackers[C][square];
+  return detail::pawnAttackers[C][square];
 }
 
-inline Bitboard ortho_rays(Square s) { return detail::ortho_rays[s]; }
+inline Bitboard ortho_rays(Square s) { return detail::orthoRays[s]; }
 
-inline Bitboard diag_rays(Square s) { return detail::diag_rays[s]; }
+inline Bitboard diag_rays(Square s) { return detail::diagRays[s]; }
 
 inline Bitboard from_to_bb(Square from, Square to) {
-  return detail::from_to_bb[static_cast<int>(from)][static_cast<int>(to)];
+  return detail::fromToBB[static_cast<int>(from)][static_cast<int>(to)];
 }
 
 template <Piece P>

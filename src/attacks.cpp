@@ -42,7 +42,7 @@ void init_knight_attacks() {
         }
       }
     }
-    detail::knight_attacks[static_cast<int>(square)] = attacks;
+    detail::knightAttacks[static_cast<int>(square)] = attacks;
   }
 }
 
@@ -76,27 +76,27 @@ void init_king_attacks() {
         attacks |= 1ULL << (square + SOUTH + EAST);
       }
     }
-    detail::king_attacks[static_cast<int>(square)] = attacks;
+    detail::kingAttacks[static_cast<int>(square)] = attacks;
   }
 }
 
 void init_pawn_attackers() {
   for (Square s = a1; s <= h8; ++s) {
-    Bitboard w_pawns = 0;
-    Bitboard b_pawns = 0;
+    Bitboard wPawns = 0;
+    Bitboard bPawns = 0;
     Bitboard piece = 1ULL << s;
     if ((piece & FILE_A) == 0) {
-      w_pawns |= 1ULL << (s + (SOUTH + WEST)); // wpawns attack from below
-      b_pawns |= 1ULL << (s + (NORTH + WEST)); // bpawns attack from above
+      wPawns |= 1ULL << (s + (SOUTH + WEST)); // wpawns attack from below
+      bPawns |= 1ULL << (s + (NORTH + WEST)); // bpawns attack from above
     }
     if ((piece & FILE_H) == 0) {
-      w_pawns |= 1ULL << (s + (SOUTH + EAST)); // wpawns attack from below
-      b_pawns |= 1ULL << (s + (NORTH + EAST)); // bpawns attack from above
+      wPawns |= 1ULL << (s + (SOUTH + EAST)); // wpawns attack from below
+      bPawns |= 1ULL << (s + (NORTH + EAST)); // bpawns attack from above
     }
-    detail::pawn_attackers[WHITE][s] =
-        b_pawns; // b_pawns attack you if you are white
-    detail::pawn_attackers[BLACK][s] =
-        w_pawns; // w_pawns attack you if you are black
+    detail::pawnAttackers[WHITE][s] =
+        bPawns; // b_pawns attack you if you are white
+    detail::pawnAttackers[BLACK][s] =
+        wPawns; // w_pawns attack you if you are black
   }
 }
 
@@ -111,7 +111,7 @@ void init_from_to_bb() {
       for (int i = r + dr, j = f + df; 0 <= i && i < 8 && 0 <= j && j < 8;
            i += dr, j += df) {
         int toSquare = i * 8 + j;
-        detail::from_to_bb[from][toSquare] = bb;
+        detail::fromToBB[from][toSquare] = bb;
         bb |= 1ULL << toSquare;
       }
     }
@@ -120,8 +120,8 @@ void init_from_to_bb() {
 
 void init_rays() {
   for (Square s = a1; s <= h8; ++s) {
-    detail::ortho_rays[s] = sliding_attacks<ROOK>(s, 0);
-    detail::diag_rays[s] = sliding_attacks<BISHOP>(s, 0);
+    detail::orthoRays[s] = sliding_attacks<ROOK>(s, 0);
+    detail::diagRays[s] = sliding_attacks<BISHOP>(s, 0);
   }
 }
 } // namespace

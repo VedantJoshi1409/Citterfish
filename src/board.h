@@ -14,16 +14,16 @@
 namespace citterfish {
 struct StateInfo {
   // copied
-  Key zobrist_hash;
-  uint16_t halfmove_clock;
-  uint8_t castling_rights; // First digit is K then Q then k then q
+  Key zobristHash;
+  uint16_t halfmoveClock;
+  uint8_t castlingRights; // First digit is K then Q then k then q
 
   // refreshed
   Bitboard checkers;
-  Bitboard pinned_pieces;
+  Bitboard pinnedPieces;
   Bitboard pinners;
   Piece captured;
-  Square en_passant_square;
+  Square enPassantSquare;
   uint16_t repeatAmount;
 
   StateInfo *prevSt;
@@ -36,10 +36,10 @@ class Board {
 private:
   std::array<std::array<Bitboard, 6>, 2> pieces;
   std::array<Bitboard, 2> occupied;
-  Bitboard all_occupied;
-  bool is_white;
-  uint16_t fullmove_clock;
-  std::array<PieceType, 64> piece_map;
+  Bitboard allOccupied;
+  bool isWhite;
+  uint16_t fullmoveClock;
+  std::array<PieceType, 64> pieceMap;
   StateInfo *st;
 
 public:
@@ -52,58 +52,58 @@ public:
   Bitboard get_pieces(Color color, Piece piece) const {
     return pieces[color][piece];
   }
-  PieceType piece_on(Square square) const { return piece_map[square]; }
-  bool get_is_white() const { return is_white; }
-  uint8_t get_castling_rights() const { return st->castling_rights; }
-  Square get_en_passant_square() const { return st->en_passant_square; }
-  uint16_t get_halfmove_clock() const { return st->halfmove_clock; }
-  uint16_t get_fullmove_clock() const { return fullmove_clock; }
-  Key get_zobrist_hash() const { return st->zobrist_hash; }
+  PieceType piece_on(Square square) const { return pieceMap[square]; }
+  bool is_white() const { return isWhite; }
+  uint8_t castling_rights() const { return st->castlingRights; }
+  Square en_passant_square() const { return st->enPassantSquare; }
+  uint16_t halfmove_clock() const { return st->halfmoveClock; }
+  uint16_t fullmove_clock() const { return fullmoveClock; }
+  Key zobrist_hash() const { return st->zobristHash; }
   Bitboard get_pieces(Color color) const { return occupied[color]; }
-  Bitboard get_pieces() const { return all_occupied; }
+  Bitboard get_pieces() const { return allOccupied; }
   Bitboard get_checkers() const { return st->checkers; }
-  Bitboard get_pinned() const { return st->pinned_pieces; }
+  Bitboard get_pinned() const { return st->pinnedPieces; }
   Bitboard get_pinners() const { return st->pinners; }
 
   template <Color us> void refresh_checks_pins() {
     constexpr Color them = ~us;
     constexpr Direction D = (us == WHITE) ? SOUTH : NORTH;
-    Square king_square =
+    Square kingSquare =
         static_cast<Square>(std::countr_zero(get_pieces<KING>(us)));
     // Get all knight checkers
-    Bitboard cur_checkers =
-        attacks::knight_attacks(king_square) & get_pieces<KNIGHT>(them);
+    Bitboard curCheckers =
+        attacks::knight_attacks(kingSquare) & get_pieces<KNIGHT>(them);
 
     // Get all pawn checkers
-    cur_checkers |=
-        attacks::pawn_attackers<us>(king_square) & get_pieces<PAWN>(them);
+    curCheckers |=
+        attacks::pawn_attackers<us>(kingSquare) & get_pieces<PAWN>(them);
 
     Bitboard king_ortho = attacks::sliding_attacks<ROOK>(
-        king_square,
+        kingSquare,
         get_pieces(them)); // Where the king can be orthogonally attacked from
     Bitboard king_diag = attacks::sliding_attacks<BISHOP>(
-        king_square,
+        kingSquare,
         get_pieces(them)); // Where the king can be diagonally attacked from
-    Bitboard king_attackers =
+    Bitboard kingAttackers =
         (king_ortho & (get_pieces<ROOK>(them) | get_pieces<QUEEN>(them))) |
         (king_diag & (get_pieces<BISHOP>(them) | get_pieces<QUEEN>(them)));
-    Bitboard cur_pinned = 0;
-    Bitboard cur_pinners = 0;
-    while (king_attackers) {
-      Square attacker = static_cast<Square>(std::countr_zero(king_attackers));
+    Bitboard curPinned = 0;
+    Bitboard curPinners = 0;
+    while (kingAttackers) {
+      Square attacker = static_cast<Square>(std::countr_zero(kingAttackers));
       Bitboard blockers =
-          attacks::from_to_bb(king_square, attacker) & get_pieces(us);
+          attacks::from_to_bb(kingSquare, attacker) & get_pieces(us);
       if (blockers == 0) {
-        cur_checkers |= 1ULL << attacker;
+        curCheckers |= 1ULL << attacker;
       } else if ((blockers & (blockers - 1)) == 0) {
-        cur_pinned |= blockers;
-        cur_pinners |= 1ULL << attacker;
+        curPinned |= blockers;
+        curPinners |= 1ULL << attacker;
       }
-      king_attackers &= king_attackers - 1;
+      kingAttackers &= kingAttackers - 1;
     }
-    st->checkers = cur_checkers;
-    st->pinned_pieces = cur_pinned;
-    st->pinners = cur_pinners;
+    st->checkers = curCheckers;
+    st->pinnedPieces = curPinned;
+    st->pinners = curPinners;
   }
 
   template <Color us> void make_move(Move move, StateInfo *newSt) {
@@ -119,9 +119,9 @@ public:
     memcpy(newSt, st, offsetof(StateInfo, checkers));
     newSt->prevSt = st;
     st = newSt;
-    ++st->halfmove_clock;
-    is_white = !is_white;
-    ++fullmove_clock;
+    ++st->halfmoveClock;
+    isWhite = !isWhite;
+    ++fullmoveClock;
 
     if (type == REGULAR) { // if regular just remove captured, and move moving
       Piece captured = piece_type_to_piece(piece_on(to));
@@ -137,9 +137,9 @@ public:
   template <Color us> void put_piece(Piece p, Square s, Bitboard squareBB) {
     pieces[us][p] ^= squareBB;
     occupied[us] ^= squareBB;
-    all_occupied ^= squareBB;
-    st->zobrist_hash ^= zobrist::getPieceKey(us, p, s);
-    piece_map[s] = piece_to_piece_type(p, us);
+    allOccupied ^= squareBB;
+    st->zobristHash ^= zobrist::getPieceKey(us, p, s);
+    pieceMap[s] = piece_to_piece_type(p, us);
   }
 
   template <Color us>
@@ -150,12 +150,12 @@ public:
     occupied[them] ^= capturedBB;
     pieces[us][moving] ^= movingBB | capturedBB;
     occupied[us] ^= movingBB | capturedBB;
-    all_occupied ^= movingBB;
-    st->zobrist_hash ^= zobrist::getPieceKey(us, moving, sMoving);
-    st->zobrist_hash ^= zobrist::getPieceKey(us, moving, sCaptured);
-    st->zobrist_hash ^= zobrist::getPieceKey(them, captured, sCaptured);
-    piece_map[sMoving] = NO_PIECE_TYPE;
-    piece_map[sCaptured] = piece_to_piece_type(moving, us);
+    allOccupied ^= movingBB;
+    st->zobristHash ^= zobrist::getPieceKey(us, moving, sMoving);
+    st->zobristHash ^= zobrist::getPieceKey(us, moving, sCaptured);
+    st->zobristHash ^= zobrist::getPieceKey(them, captured, sCaptured);
+    pieceMap[sMoving] = NO_PIECE_TYPE;
+    pieceMap[sCaptured] = piece_to_piece_type(moving, us);
   }
 
   template <Color us>
@@ -168,9 +168,9 @@ public:
   template <Color us> void remove_piece(Piece p, Square s, Bitboard squareBB) {
     pieces[us][p] ^= squareBB;
     occupied[us] ^= squareBB;
-    all_occupied ^= squareBB;
-    st->zobrist_hash ^= zobrist::getPieceKey(us, p, s);
-    piece_map[s] = NO_PIECE_TYPE;
+    allOccupied ^= squareBB;
+    st->zobristHash ^= zobrist::getPieceKey(us, p, s);
+    pieceMap[s] = NO_PIECE_TYPE;
   }
 
   void refresh_piece_map();

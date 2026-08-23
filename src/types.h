@@ -124,17 +124,17 @@ enum Square : std::uint8_t {
     a7, b7, c7, d7, e7, f7, g7, h7,
     a8, b8, c8, d8, e8, f8, g8, h8,
 
-    no_square
+    NO_SQUARE
 };
 // clang-format on
 inline Square string_to_square(const std::string &square) {
   if (square.length() != 2) {
-    return no_square;
+    return NO_SQUARE;
   }
   char fileChar = square.at(0);
   char rankChar = square.at(1);
   if (fileChar < 'a' || fileChar > 'h' || rankChar < '1' || rankChar > '8') {
-    return no_square;
+    return NO_SQUARE;
   }
   int file = fileChar - 'a';
   int rank = rankChar - '1';
