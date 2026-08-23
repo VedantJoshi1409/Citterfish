@@ -21,9 +21,9 @@ inline void print_bb(Bitboard bb) {
 }
 constexpr Bitboard ALL_SQUARES = 0xFFFFFFFFFFFFFFFFULL;
 
-enum Color : uint8_t { WHITE, BLACK, BAD_COLOR };
+enum Color : uint8_t { WHITE, BLACK, NO_COLOR };
 constexpr Color operator~(Color c) { return static_cast<Color>(c ^ 1); }
-enum Piece : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, BAD_PIECE };
+enum Piece : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NO_PIECE };
 enum PieceType : uint8_t {
   W_PAWN,
   W_KNIGHT,
@@ -72,7 +72,7 @@ inline Color char_to_color(char c) {
     return BLACK;
   else if (std::isupper(c))
     return WHITE;
-  return BAD_COLOR;
+  return NO_COLOR;
 }
 inline Piece char_to_piece(char c) {
   switch (std::tolower(c)) {
@@ -89,7 +89,7 @@ inline Piece char_to_piece(char c) {
   case 'k':
     return KING;
   }
-  return BAD_PIECE;
+  return NO_PIECE;
 }
 inline PieceType piece_to_piece_type(Piece piece, Color color) {
   return static_cast<PieceType>(color * 6 + piece);

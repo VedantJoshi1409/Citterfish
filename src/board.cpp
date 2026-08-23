@@ -50,9 +50,9 @@ Board::Board(const std::string &fen) {
     i += 3;
   } else {
     st->en_passant_square = string_to_square(fen.substr(i + 1, 2));
-    i+=4;
+    i += 4;
   }
-  
+
   if (i >= fen.size()) {
     st->halfmove_clock = 0;
     fullmove_clock = 1;
@@ -185,9 +185,9 @@ std::ostream &operator<<(std::ostream &os, const Board &b) {
     output += "| ";
     for (int c = 0; c < 8; c++) {
       Square square = static_cast<Square>(r * 8 + c);
-      output += b.get_piece_map(square) == NO_PIECE_TYPE
+      output += b.piece_on(square) == NO_PIECE_TYPE
                     ? ' '
-                    : piece_type_to_char(b.get_piece_map(square));
+                    : piece_type_to_char(b.piece_on(square));
       output += " | ";
     }
     output += "\n" + std::string(separator);

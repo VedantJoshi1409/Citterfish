@@ -20,6 +20,9 @@ int main() {
               << square_to_string(move.get_to_square()) << ": "
               << static_cast<int>(move.get_move_type()) << std::endl;
   }
+  StateInfo st;
+  board.make_move<WHITE>(Move(c5, c6), &st);
+  std::cout << board << std::endl;
 
   return 0;
 }
