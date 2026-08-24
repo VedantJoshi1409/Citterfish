@@ -198,6 +198,26 @@ template <Color C> constexpr Direction pawn_dir() {
   else
     return SOUTH;
 }
+template <Color C> constexpr Square epSquare_from_moving(Square moving) {
+  if constexpr (C == WHITE) {
+    return moving + NORTH;
+  } else {
+    return moving + SOUTH;
+  }
+}
+template <Color C> constexpr Square epSquare_from_dest(Square dest) {
+  if constexpr(C == WHITE) {
+    return dest + SOUTH;
+  } else {
+    return dest + NORTH;
+  }
+}
+constexpr bool is_double_push(Square from, Square to) {
+  return std::abs(from-to)==16;
+}
+constexpr Bitboard square_to_bb(Square s) {
+  return 1ULL << static_cast<int8_t>(s);
+}
 
 enum Files : Bitboard {
   FILE_A = 0x0101010101010101ULL,

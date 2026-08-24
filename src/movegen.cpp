@@ -2,6 +2,7 @@
 #include "attacks.h"
 #include "board.h"
 #include "types.h"
+#include <cassert>
 
 namespace citterfish {
 
@@ -90,6 +91,7 @@ void gen_en_passant(Bitboard pawns, Square ep_square, MoveList &moveList) {
 template <Color C>
 void gen_en_passant(Bitboard pawns, Bitboard king, Bitboard orthoAttackers,
                     Bitboard occupied, Square epSquare, MoveList &moveList) {
+  assert(epSquare != NO_SQUARE);
   constexpr Direction D = pawn_dir<C>();
   Bitboard attackers = attacks::pawn_attackers<~C>(epSquare) &
                        pawns; // flip color since the enemy getting attacked
@@ -275,9 +277,11 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
     Bitboard nonPinned = ~b.get_pinned();
     gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces(~C),
                       ~b.get_pieces(), moveList);
-    gen_en_passant<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces<KING>(C),
+    if (b.en_passant_square() != NO_SQUARE) {
+      gen_en_passant<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces<KING>(C),
                       b.get_pieces<ROOK>(~C) | b.get_pieces<QUEEN>(~C),
                       b.get_pieces(), b.en_passant_square(), moveList);
+    }
     gen_knight_moves(b.get_pieces<KNIGHT>(C) & nonPinned, b.get_pieces(C),
                      moveList);
     gen_slider_moves<ROOK>(b.get_pieces<ROOK>(C) & nonPinned, b.get_pieces(C),

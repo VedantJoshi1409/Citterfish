@@ -186,8 +186,9 @@ template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
   newSt->prevSt = st;
   st = newSt;
   ++st->halfmoveClock;
+  st->enPassantSquare = NO_SQUARE;
   isWhite = !isWhite;
-  ++fullmoveClock;
+  if constexpr (us == BLACK) {++fullmoveClock;}
 
   if (type == REGULAR) { // if regular just remove captured, and move moving
     PieceType captured = piece_on(to);
@@ -198,6 +199,31 @@ template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
     } else {
       st->captured = NO_PIECE;
       move_piece<us>(moving, from, to, fromBB, toBB);
+      if (moving == PAWN && is_double_push(from, to)) { //double push
+        st->enPassantSquare = epSquare_from_moving<us>(from);
+      }
+    }
+  } else if (type == ENPASSANT) {
+    move_piece<us>(PAWN, from, to, fromBB, toBB);
+    Square capturedSquare = epSquare_from_dest<us>(to);
+    remove_piece<them>(PAWN, capturedSquare, 1ULL << capturedSquare);
+  } else if (type == CASTLE) {
+    if constexpr(us == WHITE) {
+      if (to == g1) {
+        move_piece<us>(KING, e1, g1);
+        move_piece<us>(ROOK, h1, f1);
+      } else {
+        move_piece<us>(KING, e1, c1);
+        move_piece<us>(ROOK, a1, d1);
+      }
+    } else {
+      if (to == g8) {
+        move_piece<us>(KING, e8, g8);
+        move_piece<us>(ROOK, h8, f8);
+      } else {
+        move_piece<us>(KING, e8, c8);
+        move_piece<us>(ROOK, a8, d8);
+      }
     }
   }
 }
