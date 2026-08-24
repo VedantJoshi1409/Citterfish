@@ -129,6 +129,81 @@ void Board::refresh_zobrist_hash() {
   st->zobristHash ^= zobrist::getCastlingKey(st->castlingRights);
 }
 
+template <Color us> void Board::refresh_checks_pins() {
+  constexpr Color them = ~us;
+  constexpr Direction D = (us == WHITE) ? SOUTH : NORTH;
+  Square kingSquare =
+      static_cast<Square>(std::countr_zero(get_pieces<KING>(us)));
+  // Get all knight checkers
+  Bitboard curCheckers =
+      attacks::knight_attacks(kingSquare) & get_pieces<KNIGHT>(them);
+
+  // Get all pawn checkers
+  curCheckers |=
+      attacks::pawn_attackers<us>(kingSquare) & get_pieces<PAWN>(them);
+
+  Bitboard king_ortho = attacks::sliding_attacks<ROOK>(
+      kingSquare,
+      get_pieces(them)); // Where the king can be orthogonally attacked from
+  Bitboard king_diag = attacks::sliding_attacks<BISHOP>(
+      kingSquare,
+      get_pieces(them)); // Where the king can be diagonally attacked from
+  Bitboard kingAttackers =
+      (king_ortho & (get_pieces<ROOK>(them) | get_pieces<QUEEN>(them))) |
+      (king_diag & (get_pieces<BISHOP>(them) | get_pieces<QUEEN>(them)));
+  Bitboard curPinned = 0;
+  Bitboard curPinners = 0;
+  while (kingAttackers) {
+    Square attacker = static_cast<Square>(std::countr_zero(kingAttackers));
+    Bitboard blockers =
+        attacks::from_to_bb(kingSquare, attacker) & get_pieces(us);
+    if (blockers == 0) {
+      curCheckers |= 1ULL << attacker;
+    } else if ((blockers & (blockers - 1)) == 0) {
+      curPinned |= blockers;
+      curPinners |= 1ULL << attacker;
+    }
+    kingAttackers &= kingAttackers - 1;
+  }
+  st->checkers = curCheckers;
+  st->pinnedPieces = curPinned;
+  st->pinners = curPinners;
+}
+template void Board::refresh_checks_pins<WHITE>();
+template void Board::refresh_checks_pins<BLACK>();
+
+template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
+  constexpr Color them = ~us;
+  Square from = move.get_from_square();
+  Square to = move.get_to_square();
+  Bitboard fromBB = 1ULL << from;
+  Bitboard toBB = 1ULL << to;
+  MoveType type = move.get_move_type();
+  Piece moving = piece_type_to_piece(piece_on(from));
+
+  // copy the incremental fields of stateInfo
+  memcpy(newSt, st, offsetof(StateInfo, checkers));
+  newSt->prevSt = st;
+  st = newSt;
+  ++st->halfmoveClock;
+  isWhite = !isWhite;
+  ++fullmoveClock;
+
+  if (type == REGULAR) { // if regular just remove captured, and move moving
+    PieceType captured = piece_on(to);
+    if (captured != NO_PIECE_TYPE) {
+      Piece capturedPiece = piece_type_to_piece(captured);
+      st->captured = capturedPiece;
+      capture_piece<us>(moving, capturedPiece, from, to, fromBB, toBB);
+    } else {
+      st->captured = NO_PIECE;
+      move_piece<us>(moving, from, to, fromBB, toBB);
+    }
+  }
+}
+template void Board::make_move<WHITE>(Move move, StateInfo *newSt);
+template void Board::make_move<BLACK>(Move move, StateInfo *newSt);
+
 std::string Board::to_fen() const {
   std::string fen;
   for (int row = 7; row >= 0; --row) {
