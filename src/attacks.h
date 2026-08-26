@@ -7,7 +7,7 @@ namespace citterfish::attacks {
 namespace detail {
 inline std::array<Bitboard, 64> knightAttacks;
 inline std::array<Bitboard, 64> kingAttacks;
-inline std::array<std::array<Bitboard, 64>, 2> pawnAttackers;
+inline std::array<std::array<Bitboard, 64>, 2> pawnAttacks;
 inline std::array<Bitboard, 64> orthoRays;
 inline std::array<Bitboard, 64> diagRays;
 inline std::array<std::array<Bitboard, 64>, 64> fromToBB{};
@@ -17,12 +17,22 @@ void init_attacks();
 
 template <Color C> inline Bitboard pawn_attacks(Bitboard pawns) {
   if constexpr (C == WHITE) {
-    return ((pawns & ~FILE_A) << (NORTH + WEST)) |
-           ((pawns & ~FILE_H) << (NORTH + WEST));
+    return shift<NORTH+WEST>(pawns & ~FILE_A) |
+           shift<NORTH+EAST>(pawns & ~FILE_H);
   } else {
-    return ((pawns & ~FILE_A) >> -(SOUTH + WEST)) |
-           ((pawns & ~FILE_H) >> -(SOUTH + WEST));
+    return shift<SOUTH+WEST>(pawns & ~FILE_A) |
+           shift<SOUTH+EAST>(pawns & ~FILE_H);
   }
+}
+inline Bitboard pawn_attacks(Color c, Bitboard pawns) {
+  return c == WHITE ? pawn_attacks<WHITE>(pawns) : pawn_attacks<BLACK>(pawns);
+}
+
+template <Color C> inline Bitboard pawn_attacks(Square s) {
+  return detail::pawnAttacks[C][s];
+}
+inline Bitboard pawn_attacks(Color c, Square s) {
+  return c == WHITE ? pawn_attacks<WHITE>(s) : pawn_attacks<BLACK>(s);
 }
 
 inline Bitboard knight_attacks(Square square) {
@@ -31,10 +41,6 @@ inline Bitboard knight_attacks(Square square) {
 
 inline Bitboard king_attacks(Square square) {
   return detail::kingAttacks[static_cast<int>(square)];
-}
-
-template <Color C> inline Bitboard pawn_attackers(Square square) {
-  return detail::pawnAttackers[C][square];
 }
 
 inline Bitboard ortho_rays(Square s) { return detail::orthoRays[s]; }

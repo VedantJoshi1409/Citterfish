@@ -80,23 +80,10 @@ void init_king_attacks() {
   }
 }
 
-void init_pawn_attackers() {
+void init_pawn_attacks() {
   for (Square s = a1; s <= h8; ++s) {
-    Bitboard wPawns = 0;
-    Bitboard bPawns = 0;
-    Bitboard piece = 1ULL << s;
-    if ((piece & FILE_A) == 0) {
-      wPawns |= 1ULL << (s + (SOUTH + WEST)); // wpawns attack from below
-      bPawns |= 1ULL << (s + (NORTH + WEST)); // bpawns attack from above
-    }
-    if ((piece & FILE_H) == 0) {
-      wPawns |= 1ULL << (s + (SOUTH + EAST)); // wpawns attack from below
-      bPawns |= 1ULL << (s + (NORTH + EAST)); // bpawns attack from above
-    }
-    detail::pawnAttackers[WHITE][s] =
-        bPawns; // b_pawns attack you if you are white
-    detail::pawnAttackers[BLACK][s] =
-        wPawns; // w_pawns attack you if you are black
+    detail::pawnAttacks[WHITE][s] = pawn_attacks<WHITE>(1ULL<<s);
+    detail::pawnAttacks[BLACK][s] = pawn_attacks<BLACK>(1ULL<<s);
   }
 }
 
@@ -129,7 +116,7 @@ void init_rays() {
 void init_attacks() {
   init_knight_attacks();
   init_king_attacks();
-  init_pawn_attackers();
+  init_pawn_attacks();
   init_from_to_bb();
   fill_attack_map<ROOK>();
   fill_attack_map<BISHOP>();

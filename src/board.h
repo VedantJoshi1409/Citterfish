@@ -1,11 +1,8 @@
 #pragma once
 
-#include "attacks.h"
 #include "types.h"
 #include "zobrist.h"
 #include <array>
-#include <bit>
-#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <ostream>
@@ -53,6 +50,9 @@ public:
   Bitboard get_pieces(Color color, Piece piece) const {
     return pieces[color][piece];
   }
+  Bitboard get_pieces(PieceType pieceType) const {
+    return get_pieces(piece_type_to_color(pieceType), piece_type_to_piece(pieceType));
+  }
   PieceType piece_on(Square square) const { return pieceMap[square]; }
   bool is_white() const { return isWhite; }
   uint8_t castling_rights() const { return st->castlingRights; }
@@ -66,54 +66,54 @@ public:
   Bitboard get_pinned() const { return st->pinnedPieces; }
   Bitboard get_pinners() const { return st->pinners; }
 
-  template <Color us> void refresh_checks_pins();
+void refresh_checks_pins();
 
-  template <Color us> void make_move(Move move, StateInfo *newSt);
+void make_move(Move move, StateInfo *newSt);
 
-  template <Color us> void put_piece(Piece p, Square s, Bitboard squareBB) {
-    pieces[us][p] ^= squareBB;
-    occupied[us] ^= squareBB;
+void put_piece(Piece p, Color c, Square s, Bitboard squareBB) {
+    pieces[c][p] ^= squareBB;
+    occupied[c] ^= squareBB;
     allOccupied ^= squareBB;
-    st->zobristHash ^= zobrist::getPieceKey(us, p, s);
-    pieceMap[s] = piece_to_piece_type(p, us);
+    st->zobristHash ^= zobrist::getPieceKey(c, p, s);
+    pieceMap[s] = piece_to_piece_type(p, c);
   }
-  template <Color us> void put_piece(Piece p, Square s) {
-    return put_piece<us>(p, s, square_to_bb(s));
+void put_piece(Piece p, Color c, Square s) {
+    return put_piece(p, c, s, square_to_bb(s));
   }
-  template <Color us> void capture_piece(Piece moving, Piece captured, Square sMoving,
+void capture_piece(Piece moving, Color c, Piece captured, Square sMoving,
                      Square sCaptured, Bitboard movingBB, Bitboard capturedBB) {
-    constexpr Color them = ~us;
+    Color them = ~c;
     pieces[them][captured] ^= capturedBB;
     occupied[them] ^= capturedBB;
-    pieces[us][moving] ^= movingBB | capturedBB;
-    occupied[us] ^= movingBB | capturedBB;
+    pieces[c][moving] ^= movingBB | capturedBB;
+    occupied[c] ^= movingBB | capturedBB;
     allOccupied ^= movingBB;
-    st->zobristHash ^= zobrist::getPieceKey(us, moving, sMoving);
-    st->zobristHash ^= zobrist::getPieceKey(us, moving, sCaptured);
+    st->zobristHash ^= zobrist::getPieceKey(c, moving, sMoving);
+    st->zobristHash ^= zobrist::getPieceKey(c, moving, sCaptured);
     st->zobristHash ^= zobrist::getPieceKey(them, captured, sCaptured);
     pieceMap[sMoving] = NO_PIECE_TYPE;
-    pieceMap[sCaptured] = piece_to_piece_type(moving, us);
+    pieceMap[sCaptured] = piece_to_piece_type(moving, c);
   }
-  template <Color us> void capture_piece(Piece moving, Piece captured, Square sMoving, Square sCaptured) {
-    capture_piece<us>(moving, captured, sMoving, sCaptured, square_to_bb(sMoving), square_to_bb(sCaptured));
+void capture_piece(Piece moving, Color c, Piece captured, Square sMoving, Square sCaptured) {
+    capture_piece(moving, c, captured, sMoving, sCaptured, square_to_bb(sMoving), square_to_bb(sCaptured));
   }
-  template <Color us> void move_piece(Piece p, Square from, Square to, Bitboard fromBB,
+void move_piece(Piece p, Color c, Square from, Square to, Bitboard fromBB,
                   Bitboard toBB) {
-    put_piece<us>(p, to, toBB);
-    remove_piece<us>(p, from, fromBB);
+    put_piece(p, c, to, toBB);
+    remove_piece(p, c, from, fromBB);
   }
-  template <Color us> void move_piece(Piece p, Square from, Square to) {
-    move_piece<us>(p, from, to, square_to_bb(from), square_to_bb(to));
+void move_piece(Piece p, Color c, Square from, Square to) {
+    move_piece(p, c, from, to, square_to_bb(from), square_to_bb(to));
   }
-  template <Color us> void remove_piece(Piece p, Square s, Bitboard squareBB) {
-    pieces[us][p] ^= squareBB;
-    occupied[us] ^= squareBB;
+void remove_piece(Piece p, Color c, Square s, Bitboard squareBB) {
+    pieces[c][p] ^= squareBB;
+    occupied[c] ^= squareBB;
     allOccupied ^= squareBB;
-    st->zobristHash ^= zobrist::getPieceKey(us, p, s);
+    st->zobristHash ^= zobrist::getPieceKey(c, p, s);
     pieceMap[s] = NO_PIECE_TYPE;
   }
-  template <Color us> void remove_piece(Piece p, Square s) {
-    return remove_piece<us>(p, s, square_to_bb(s));
+void remove_piece(Piece p, Color c, Square s) {
+    return remove_piece(p, c, s, square_to_bb(s));
   }
 
   void refresh_piece_map();

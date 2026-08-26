@@ -1,3 +1,4 @@
+#include "attacks.h"
 #include "board.h"
 #include "types.h"
 #include "zobrist.h"
@@ -129,9 +130,9 @@ void Board::refresh_zobrist_hash() {
   st->zobristHash ^= zobrist::getCastlingKey(st->castlingRights);
 }
 
-template <Color us> void Board::refresh_checks_pins() {
-  constexpr Color them = ~us;
-  constexpr Direction D = (us == WHITE) ? SOUTH : NORTH;
+void Board::refresh_checks_pins() {
+  Color us = isWhite ? WHITE : BLACK;
+  Color them = ~us;
   Square kingSquare =
       static_cast<Square>(std::countr_zero(get_pieces<KING>(us)));
   // Get all knight checkers
@@ -140,7 +141,7 @@ template <Color us> void Board::refresh_checks_pins() {
 
   // Get all pawn checkers
   curCheckers |=
-      attacks::pawn_attackers<us>(kingSquare) & get_pieces<PAWN>(them);
+      attacks::pawn_attacks(us, kingSquare) & get_pieces<PAWN>(them);
 
   Bitboard king_ortho = attacks::sliding_attacks<ROOK>(
       kingSquare,
@@ -169,12 +170,10 @@ template <Color us> void Board::refresh_checks_pins() {
   st->pinnedPieces = curPinned;
   st->pinners = curPinners;
 }
-template void Board::refresh_checks_pins<WHITE>();
-template void Board::refresh_checks_pins<BLACK>();
 
-template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
+void Board::make_move(Move move, StateInfo *newSt) {
   //move info
-  constexpr Color them = ~us;
+  Color c = isWhite ? WHITE : BLACK;
   Square from = move.get_from_square();
   Square to = move.get_to_square();
   MoveType type = move.get_move_type();
@@ -186,8 +185,7 @@ template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
   st = newSt;
   ++st->halfmoveClock;
   st->enPassantSquare = NO_SQUARE;
-  isWhite = !isWhite;
-  if constexpr (us == BLACK) {++fullmoveClock;}
+  if (!isWhite) {++fullmoveClock;}
   //set castle rights 
   st->zobristHash ^= zobrist::getCastlingKey(st->castlingRights);
   st->castlingRights &= CastlingMask[to] & CastlingMask[from];
@@ -199,36 +197,36 @@ template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
     if (captured != NO_PIECE_TYPE) {
       Piece capturedPiece = piece_type_to_piece(captured);
       st->captured = capturedPiece;
-      capture_piece<us>(moving, capturedPiece, from, to);
+      capture_piece(moving, c, capturedPiece, from, to);
     } else {
       st->captured = NO_PIECE;
-      move_piece<us>(moving, from, to);
+      move_piece(moving, c, from, to);
       if (moving == PAWN && is_double_push(from, to)) { //double push
-        st->enPassantSquare = epSquare_from_moving<us>(from);
+        st->enPassantSquare = epSquare_from_moving(c, from);
       }
     }
   } else if (type == ENPASSANT) {
     st->captured = PAWN;
-    move_piece<us>(PAWN, from, to);
-    Square capturedSquare = epSquare_from_dest<us>(to);
-    remove_piece<them>(PAWN, capturedSquare, 1ULL << capturedSquare);
+    move_piece(PAWN, c, from, to);
+    Square capturedSquare = epSquare_from_dest(c, to);
+    remove_piece(PAWN, ~c, capturedSquare, 1ULL << capturedSquare);
   } else if (type == CASTLE) {
     st->captured = NO_PIECE;
-    if constexpr(us == WHITE) {
+    if (isWhite) {
       if (to == g1) {
-        move_piece<us>(KING, e1, g1);
-        move_piece<us>(ROOK, h1, f1);
+        move_piece(KING, c, e1, g1);
+        move_piece(ROOK, c, h1, f1);
       } else {
-        move_piece<us>(KING, e1, c1);
-        move_piece<us>(ROOK, a1, d1);
+        move_piece(KING, c, e1, c1);
+        move_piece(ROOK, c, a1, d1);
       }
     } else {
       if (to == g8) {
-        move_piece<us>(KING, e8, g8);
-        move_piece<us>(ROOK, h8, f8);
+        move_piece(KING, c, e8, g8);
+        move_piece(ROOK, c, h8, f8);
       } else {
-        move_piece<us>(KING, e8, c8);
-        move_piece<us>(ROOK, a8, d8);
+        move_piece(KING, c, e8, c8);
+        move_piece(ROOK, c, a8, d8);
       }
     }
   } else if (type == PROMOTION) {
@@ -237,16 +235,16 @@ template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
     if (captured != NO_PIECE_TYPE) {
       Piece capturedPiece = piece_type_to_piece(captured);
       st->captured = capturedPiece;
-      remove_piece<them>(capturedPiece, to);
+      remove_piece(capturedPiece, ~c, to);
     } else {
       st->captured = NO_PIECE;
     }
-    remove_piece<us>(PAWN, from);
-    put_piece<us>(promoted, to);
+    remove_piece(PAWN, c, from);
+    put_piece(promoted, c, to);
   }
+
+  isWhite = !isWhite;
 }
-template void Board::make_move<WHITE>(Move move, StateInfo *newSt);
-template void Board::make_move<BLACK>(Move move, StateInfo *newSt);
 
 std::string Board::to_fen() const {
   std::string fen;

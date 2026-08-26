@@ -80,7 +80,7 @@ void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard empty,
 
 template <Color C>
 void gen_en_passant(Bitboard pawns, Square ep_square, MoveList &moveList) {
-  Bitboard attackers = attacks::pawn_attackers<~C>(ep_square) &
+  Bitboard attackers = attacks::pawn_attacks<~C>(ep_square) &
                        pawns; // flip color since the enemy getting attacked
   while (attackers) {
     Square from = pop_least_square(attackers);
@@ -93,7 +93,7 @@ void gen_en_passant(Bitboard pawns, Bitboard king, Bitboard orthoAttackers,
                     Bitboard occupied, Square epSquare, MoveList &moveList) {
   assert(epSquare != NO_SQUARE);
   constexpr Direction D = pawn_dir<C>();
-  Bitboard attackers = attacks::pawn_attackers<~C>(epSquare) &
+  Bitboard attackers = attacks::pawn_attacks<~C>(epSquare) &
                        pawns; // flip color since the enemy getting attacked
   if ((attackers & (attackers - 1)) == 0) { // check edge case
     constexpr Bitboard epRank = C == WHITE ? RANK_5 : RANK_4;
@@ -234,7 +234,7 @@ template <Color C> void gen_pinned_moves(Board &b, MoveList &moveList) {
   }
 }
 
-// generates the attack mask for all squares attacked by pieces
+// generates the attack mask for all squares attacked by pieces (removes enemy king)
 template <Color C> Bitboard gen_attack_mask(Board &b) {
   constexpr Direction D = C == WHITE ? NORTH : SOUTH;
   Bitboard mask = 0;
@@ -245,22 +245,23 @@ template <Color C> Bitboard gen_attack_mask(Board &b) {
     mask |= attacks::knight_attacks(pop_least_square(cur));
   }
 
+  Bitboard occupiedNoKing = b.get_pieces() ^ b.get_pieces<KING>(~C);
   cur = b.get_pieces<BISHOP>(C);
   while (cur) {
     mask |=
-        attacks::sliding_attacks<BISHOP>(pop_least_square(cur), b.get_pieces());
+        attacks::sliding_attacks<BISHOP>(pop_least_square(cur), occupiedNoKing);
   }
 
   cur = b.get_pieces<ROOK>(C);
   while (cur) {
     mask |=
-        attacks::sliding_attacks<ROOK>(pop_least_square(cur), b.get_pieces());
+        attacks::sliding_attacks<ROOK>(pop_least_square(cur), occupiedNoKing);
   }
 
   cur = b.get_pieces<QUEEN>(C);
   while (cur) {
     mask |=
-        attacks::sliding_attacks<QUEEN>(pop_least_square(cur), b.get_pieces());
+        attacks::sliding_attacks<QUEEN>(pop_least_square(cur), occupiedNoKing);
   }
 
   mask |= attacks::king_attacks(least_square(b.get_pieces<KING>(C)));
@@ -271,7 +272,7 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
   moveList.count = 0;
   Square kingSquare = least_square(b.get_pieces<KING>(C));
   Bitboard attackedSquares = gen_attack_mask<~C>(b);
-  b.refresh_checks_pins<C>();
+  b.refresh_checks_pins();
   if (b.get_checkers() == 0) { // no checkers
     gen_pinned_moves<C>(b, moveList);
     Bitboard nonPinned = ~b.get_pinned();
@@ -326,7 +327,7 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
     gen_slider_moves<QUEEN>(b.get_pieces<QUEEN>(C) & nonPinned, ~legal,
                             b.get_pieces(), moveList);
     gen_king_moves(b.get_pieces<KING>(C),
-                   b.get_pieces(C) | attackedSquares | ~legal, moveList);
+                   b.get_pieces(C) | attackedSquares, moveList);
   } else { // two checkers
     gen_king_moves(b.get_pieces<KING>(C), b.get_pieces(C) | attackedSquares,
                    moveList);

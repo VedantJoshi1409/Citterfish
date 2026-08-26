@@ -209,19 +209,11 @@ template <Color C> constexpr Direction pawn_dir() {
   else
     return SOUTH;
 }
-template <Color C> constexpr Square epSquare_from_moving(Square moving) {
-  if constexpr (C == WHITE) {
-    return moving + NORTH;
-  } else {
-    return moving + SOUTH;
-  }
+constexpr Square epSquare_from_moving(Color c, Square moving) {
+    return moving +  (c == WHITE ? NORTH : SOUTH);
 }
-template <Color C> constexpr Square epSquare_from_dest(Square dest) {
-  if constexpr(C == WHITE) {
-    return dest + SOUTH;
-  } else {
-    return dest + NORTH;
-  }
+constexpr Square epSquare_from_dest(Color c, Square dest) {
+    return dest + (c == WHITE ? SOUTH : NORTH);
 }
 constexpr bool is_double_push(Square from, Square to) {
   return std::abs(from-to)==16;
