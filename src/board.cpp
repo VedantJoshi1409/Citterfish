@@ -185,7 +185,6 @@ void Board::make_move(Move move, StateInfo *newSt) {
   st = newSt;
   ++st->halfmoveClock;
   st->enPassantSquare = NO_SQUARE;
-  if (!isWhite) {++fullmoveClock;}
   //set castle rights 
   st->zobristHash ^= zobrist::getCastlingKey(st->castlingRights);
   st->castlingRights &= CastlingMask[to] & CastlingMask[from];
@@ -243,7 +242,55 @@ void Board::make_move(Move move, StateInfo *newSt) {
     put_piece(promoted, c, to);
   }
 
+  if (!isWhite) {++fullmoveClock;}
   isWhite = !isWhite;
+}
+
+void Board::unmake_move(Move move) {
+  Color c = isWhite ? WHITE : BLACK;
+  Square from = move.get_from_square();
+  Square to = move.get_to_square();
+  MoveType type = move.get_move_type();
+  Piece moving = piece_type_to_piece(piece_on(from));
+
+  if (type == REGULAR) {
+    move_piece(moving, c, to, from);
+    if (st->captured != NO_PIECE) {
+      put_piece(st->captured, ~c, to);
+    }
+  } else if (type == ENPASSANT) {
+    move_piece(moving, c, to, from);
+    put_piece(PAWN, ~c, epSquare_from_dest(c, to));
+  } else if (type == CASTLE) {
+    if (isWhite) {
+      if (to == g1) {
+        move_piece(KING, c, g1, e1);
+        move_piece(ROOK, c, f1, h1);
+      } else {
+        move_piece(KING, c, c1, e1);
+        move_piece(ROOK, c, d1, a1);
+      }
+    } else {
+      if (to == g8) {
+        move_piece(KING, c, g8, e8);
+        move_piece(ROOK, c, f8, h8);
+      } else {
+        move_piece(KING, c, c8, e8);
+        move_piece(ROOK, c, d8, a8);
+      }
+    }
+  } else if (type == PROMOTION) {
+    Piece promoted = move.get_promotion_piece();
+    remove_piece(promoted, c, to);
+    put_piece(PAWN, c, from);
+    if (st->captured != NO_PIECE) {
+      put_piece(st->captured, ~c, to);
+    }
+  }
+
+  if (isWhite) {--fullmoveClock;}
+  isWhite = !isWhite;
+  st = st->prevSt;
 }
 
 std::string Board::to_fen() const {

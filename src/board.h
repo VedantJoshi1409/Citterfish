@@ -69,6 +69,7 @@ public:
 void refresh_checks_pins();
 
 void make_move(Move move, StateInfo *newSt);
+void unmake_move(Move move);
 
 void put_piece(Piece p, Color c, Square s, Bitboard squareBB) {
     pieces[c][p] ^= squareBB;
