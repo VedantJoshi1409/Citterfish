@@ -100,7 +100,8 @@ enum CastlingRight : uint8_t {
   WHITE_KINGSIDE = 1 << 0,
   WHITE_QUEENSIDE = 1 << 1,
   BLACK_KINGSIDE = 1 << 2,
-  BLACK_QUEENSIDE = 1 << 3
+  BLACK_QUEENSIDE = 1 << 3,
+  ALL_CASTLE = WHITE_QUEENSIDE|WHITE_KINGSIDE|BLACK_QUEENSIDE|BLACK_KINGSIDE
 };
 enum CastlingBB : Bitboard {
   WHITE_KINGSIDE_EMPTY = 96ULL,
@@ -111,6 +112,16 @@ enum CastlingBB : Bitboard {
   WHITE_QUEENSIDE_ATTACKED = 12ULL,
   BLACK_KINGSIDE_ATTACKED = 6917529027641081856ULL,
   BLACK_QUEENSIDE_ATTACKED = 864691128455135232ULL
+};
+inline constexpr uint8_t CastlingMask[64] = {
+    13, 15, 15, 15, 12, 15, 15, 14,   // rank 1:  a1, e1, h1
+    15, 15, 15, 15, 15, 15, 15, 15,   // rank 2
+    15, 15, 15, 15, 15, 15, 15, 15,   // rank 3
+    15, 15, 15, 15, 15, 15, 15, 15,   // rank 4
+    15, 15, 15, 15, 15, 15, 15, 15,   // rank 5
+    15, 15, 15, 15, 15, 15, 15, 15,   // rank 6
+    15, 15, 15, 15, 15, 15, 15, 15,   // rank 7
+     7, 15, 15, 15,  3, 15, 15, 11,   // rank 8:  a8, e8, h8
 };
 
 // clang-format off

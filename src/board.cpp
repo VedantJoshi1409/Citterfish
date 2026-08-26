@@ -173,11 +173,10 @@ template void Board::refresh_checks_pins<WHITE>();
 template void Board::refresh_checks_pins<BLACK>();
 
 template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
+  //move info
   constexpr Color them = ~us;
   Square from = move.get_from_square();
   Square to = move.get_to_square();
-  Bitboard fromBB = 1ULL << from;
-  Bitboard toBB = 1ULL << to;
   MoveType type = move.get_move_type();
   Piece moving = piece_type_to_piece(piece_on(from));
 
@@ -189,25 +188,32 @@ template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
   st->enPassantSquare = NO_SQUARE;
   isWhite = !isWhite;
   if constexpr (us == BLACK) {++fullmoveClock;}
+  //set castle rights 
+  st->zobristHash ^= zobrist::getCastlingKey(st->castlingRights);
+  st->castlingRights &= CastlingMask[to] & CastlingMask[from];
+  st->zobristHash ^= zobrist::getCastlingKey(st->castlingRights);
 
-  if (type == REGULAR) { // if regular just remove captured, and move moving
+
+  if (type == REGULAR) { // if regular, just remove captured, and move moving
     PieceType captured = piece_on(to);
     if (captured != NO_PIECE_TYPE) {
       Piece capturedPiece = piece_type_to_piece(captured);
       st->captured = capturedPiece;
-      capture_piece<us>(moving, capturedPiece, from, to, fromBB, toBB);
+      capture_piece<us>(moving, capturedPiece, from, to);
     } else {
       st->captured = NO_PIECE;
-      move_piece<us>(moving, from, to, fromBB, toBB);
+      move_piece<us>(moving, from, to);
       if (moving == PAWN && is_double_push(from, to)) { //double push
         st->enPassantSquare = epSquare_from_moving<us>(from);
       }
     }
   } else if (type == ENPASSANT) {
-    move_piece<us>(PAWN, from, to, fromBB, toBB);
+    st->captured = PAWN;
+    move_piece<us>(PAWN, from, to);
     Square capturedSquare = epSquare_from_dest<us>(to);
     remove_piece<them>(PAWN, capturedSquare, 1ULL << capturedSquare);
   } else if (type == CASTLE) {
+    st->captured = NO_PIECE;
     if constexpr(us == WHITE) {
       if (to == g1) {
         move_piece<us>(KING, e1, g1);
@@ -225,6 +231,18 @@ template <Color us> void Board::make_move(Move move, StateInfo *newSt) {
         move_piece<us>(ROOK, a8, d8);
       }
     }
+  } else if (type == PROMOTION) {
+    Piece promoted = move.get_promotion_piece();
+    PieceType captured = piece_on(to);
+    if (captured != NO_PIECE_TYPE) {
+      Piece capturedPiece = piece_type_to_piece(captured);
+      st->captured = capturedPiece;
+      remove_piece<them>(capturedPiece, to);
+    } else {
+      st->captured = NO_PIECE;
+    }
+    remove_piece<us>(PAWN, from);
+    put_piece<us>(promoted, to);
   }
 }
 template void Board::make_move<WHITE>(Move move, StateInfo *newSt);
