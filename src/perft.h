@@ -3,18 +3,82 @@
 #include "board.h"
 #include "movegen.h"
 #include "types.h"
+#include "stdio.h"
+#include <cstdint>
+#include <cassert>
 
 namespace citterfish {
-    inline uint64_t perft(int depth, Board &b) {
-        if (depth == 0) {
+    namespace detail {
+        inline MoveList moveStack;
+    }
+
+    inline uint64_t perft_helper(int depth, Board &b) {
+        if (depth <= 0) {
             return 1;
         }
         MoveList moveList;
         gen_moves(b, moveList);
-        StateInfo st;
-        for (int i = 0; i < moveList.count; i++) {
-            b.make_move(moveList.moves[i], &st);
+        if (depth == 1) {
+            return moveList.count;
         }
-        return 0;
+        StateInfo st;
+        uint64_t nodes = 0;
+        for (int i = 0; i < moveList.count; i++) {
+            Move move = moveList.moves[i];
+            #ifndef NDEBUG
+                const Board before = b;
+                const StateInfo stBefore = *b.get_state();
+            #endif
+            b.make_move(move, &st);
+            detail::moveStack.add_move(move);
+            nodes+=perft_helper(depth-1, b);
+            b.unmake_move(move);
+            --detail::moveStack.count;
+            if (before != b || stBefore != *b.get_state()) {
+                std::cout<<b<<std::endl;
+                for (int i = 0; i < detail::moveStack.count; i++) {
+                    std::cout<<detail::moveStack.moves[i] << " ";
+                }
+                std::cout<<std::endl;
+            }
+            assert(before == b);
+            assert(stBefore == *b.get_state());
+        }
+        return nodes;
     }
+
+    inline void perft(int depth, Board &b) {
+        detail::moveStack.count = 0;
+        MoveList moveList;
+        gen_moves(b, moveList);
+        if (depth <= 0) {
+            std::printf("Moves Generated: 0\n");
+        } else {
+        StateInfo st;
+        uint64_t nodes = 0;
+        for (int i = 0; i < moveList.count; i++) {
+            Move move = moveList.moves[i];
+            if (depth > 1) {
+                #ifndef NDEBUG
+                    const Board before = b;
+                    const StateInfo stBefore = *b.get_state();
+
+                #endif
+                b.make_move(move, &st);
+                detail::moveStack.add_move(move);
+                uint64_t count = perft_helper(depth-1, b);
+                std::printf("%s%s: %llu\n", square_to_string(move.get_from_square()).c_str(), square_to_string(move.get_to_square()).c_str(), count);            
+                nodes+=count;
+                b.unmake_move(move);
+                --detail::moveStack.count;
+                assert(before == b);
+                assert(stBefore == *b.get_state());
+            } else {
+                std::printf("%s%s\n", square_to_string(move.get_from_square()).c_str(), square_to_string(move.get_to_square()).c_str());
+                ++nodes;
+            }
+        }
+        printf("Moves Generated: %llu\n", nodes);
+    }
+}
 }
