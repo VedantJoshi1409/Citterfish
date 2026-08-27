@@ -6,6 +6,12 @@
 
 namespace citterfish {
 
+//Pawns below 7th rank
+template <Direction D>
+void gen_reg_pawn_push(Bitboard pawns, Bitboard blocks, MoveList &moveList) {
+
+}  
+
 template <Color C>
 void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard empty,
                     MoveList &moveList) {
