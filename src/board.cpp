@@ -72,6 +72,8 @@ Board::Board(const std::string &fen) {
     st->halfmoveClock = half == "" ? 0 : std::stoi(half);
     fullmoveClock = full == "" ? 1 : std::stoi(full);
   }
+  st->captured = NO_PIECE;
+  st->prevSt = NULL;
 
   refresh_bitboards();
   refresh_zobrist_hash();
@@ -130,7 +132,40 @@ void Board::refresh_zobrist_hash() {
   st->zobristHash ^= zobrist::getCastlingKey(st->castlingRights);
 }
 
-void Board::refresh_checks_pins() {
+Bitboard Board::attack_mask(Color c) {
+  Direction d = c == WHITE ? NORTH : SOUTH;
+  Bitboard mask = 0;
+  mask |= attacks::pawn_attacks(c, pieces[c][PAWN]);
+
+  Bitboard cur = pieces[c][KNIGHT];
+  while (cur) {
+    mask |= attacks::knight_attacks(pop_least_square(cur));
+  }
+
+  Bitboard occupiedNoKing = allOccupied ^ pieces[~c][KING];
+  cur = pieces[c][BISHOP];
+  while (cur) {
+    mask |=
+        attacks::sliding_attacks<BISHOP>(pop_least_square(cur), occupiedNoKing);
+  }
+
+  cur = pieces[c][ROOK];
+  while (cur) {
+    mask |=
+        attacks::sliding_attacks<ROOK>(pop_least_square(cur), occupiedNoKing);
+  }
+
+  cur = pieces[c][QUEEN];
+  while (cur) {
+    mask |=
+        attacks::sliding_attacks<QUEEN>(pop_least_square(cur), occupiedNoKing);
+  }
+
+  mask |= attacks::king_attacks(least_square(pieces[c][KING]));
+  return mask;
+}
+
+void Board::checks_pins() {
   Color us = isWhite ? WHITE : BLACK;
   Color them = ~us;
   Square kingSquare =
@@ -247,11 +282,11 @@ void Board::make_move(Move move, StateInfo *newSt) {
 }
 
 void Board::unmake_move(Move move) {
-  Color c = isWhite ? WHITE : BLACK;
+  Color c = isWhite ? BLACK : WHITE;
   Square from = move.get_from_square();
   Square to = move.get_to_square();
   MoveType type = move.get_move_type();
-  Piece moving = piece_type_to_piece(piece_on(from));
+  Piece moving = piece_type_to_piece(piece_on(to));
 
   if (type == REGULAR) {
     move_piece(moving, c, to, from);

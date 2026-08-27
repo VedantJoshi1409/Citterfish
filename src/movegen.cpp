@@ -6,16 +6,9 @@
 
 namespace citterfish {
 
-void gen_promo(Square from, Square to, MoveList &move_list) {
-  move_list.add_move(Move(from, to, PROMOTION, QUEEN));
-  move_list.add_move(Move(from, to, PROMOTION, KNIGHT));
-  move_list.add_move(Move(from, to, PROMOTION, ROOK));
-  move_list.add_move(Move(from, to, PROMOTION, BISHOP));
-}
-
 template <Color C>
 void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard empty,
-                    MoveList &move_list) {
+                    MoveList &moveList) {
   constexpr Direction D = pawn_dir<C>();
   constexpr Bitboard promoRank = D == NORTH ? RANK_7 : RANK_2;
 
@@ -23,19 +16,17 @@ void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard empty,
   Bitboard pawnsOn7 = pawns & promoRank;
 
   Bitboard bb = (shift<D>(pawnsBelow7)) & empty; // Generate single pawn push
+  Bitboard doublePushBB = shift<D>(bb & (D == NORTH ? RANK_3 : RANK_6)) & empty; //only pawns that can move up one can move up double
   while (bb) {
     Square to = pop_least_square(bb);
     Square from = static_cast<Square>(to - D);
-    move_list.add_move(Move(from, to));
+    moveList.add_move(Move(from, to));
   }
 
-  bb = shift<static_cast<Direction>(2 * D)>(pawnsBelow7 &
-                                            (D == NORTH ? RANK_2 : RANK_7)) &
-       empty; // Generate double pawn push
-  while (bb) {
-    Square to = pop_least_square(bb);
+  while (doublePushBB) {
+    Square to = pop_least_square(doublePushBB);
     Square from = static_cast<Square>(to - 2 * D);
-    move_list.add_move(Move(from, to));
+    moveList.add_move(Move(from, to));
   }
 
   bb = shift<D + WEST>(pawnsBelow7 & ~FILE_A) &
@@ -43,7 +34,7 @@ void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard empty,
   while (bb) {
     Square to = pop_least_square(bb);
     Square from = static_cast<Square>(to - D - WEST);
-    move_list.add_move(Move(from, to));
+    moveList.add_move(Move(from, to));
   }
 
   bb = shift<D + EAST>(pawnsBelow7 & ~FILE_H) &
@@ -51,14 +42,14 @@ void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard empty,
   while (bb) {
     Square to = pop_least_square(bb);
     Square from = static_cast<Square>(to - D - EAST);
-    move_list.add_move(Move(from, to));
+    moveList.add_move(Move(from, to));
   }
 
   bb = shift<D>(pawnsOn7) & empty; // Generate single pawn push for promotion
   while (bb) {
     Square to = pop_least_square(bb);
     Square from = static_cast<Square>(to - D);
-    gen_promo(from, to, move_list);
+    moveList.add_promo(from, to);
   }
 
   bb = shift<D + WEST>(pawnsOn7 & ~FILE_A) &
@@ -66,7 +57,8 @@ void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard empty,
   while (bb) {
     Square to = pop_least_square(bb);
     Square from = static_cast<Square>(to - D - WEST);
-    gen_promo(from, to, move_list);
+    moveList.add_promo(from, to);
+
   }
 
   bb = shift<D + EAST>(pawnsOn7 & ~FILE_H) &
@@ -74,7 +66,7 @@ void gen_pawn_moves(Bitboard pawns, Bitboard target, Bitboard empty,
   while (bb) {
     Square to = pop_least_square(bb);
     Square from = static_cast<Square>(to - D - EAST);
-    gen_promo(from, to, move_list);
+    moveList.add_promo(from, to);
   }
 }
 
@@ -95,7 +87,9 @@ void gen_en_passant(Bitboard pawns, Bitboard king, Bitboard orthoAttackers,
   constexpr Direction D = pawn_dir<C>();
   Bitboard attackers = attacks::pawn_attacks<~C>(epSquare) &
                        pawns; // flip color since the enemy getting attacked
-  if ((attackers & (attackers - 1)) == 0) { // check edge case
+  if (attackers == 0) {
+    return;
+  } else if ((attackers & (attackers - 1)) == 0) { // check edge case
     constexpr Bitboard epRank = C == WHITE ? RANK_5 : RANK_4;
     if ((king & epRank) != 0 && (orthoAttackers & epRank) != 0) {
       occupied ^= attackers | (1ULL << (epSquare - D));
@@ -213,6 +207,9 @@ template <Color C> void gen_pinned_moves(Board &b, MoveList &moveList) {
 
     } else {
       switch (piece) {
+      case KNIGHT:
+        pin_ray = 0;
+        break;
       case BISHOP:
         pin_ray &= attacks::diag_rays(pinned_piece);
         break;
@@ -234,45 +231,11 @@ template <Color C> void gen_pinned_moves(Board &b, MoveList &moveList) {
   }
 }
 
-// generates the attack mask for all squares attacked by pieces (removes enemy king)
-template <Color C> Bitboard gen_attack_mask(Board &b) {
-  constexpr Direction D = C == WHITE ? NORTH : SOUTH;
-  Bitboard mask = 0;
-  mask |= attacks::pawn_attacks<C>(b.get_pieces<PAWN>(C));
-
-  Bitboard cur = b.get_pieces<KNIGHT>(C);
-  while (cur) {
-    mask |= attacks::knight_attacks(pop_least_square(cur));
-  }
-
-  Bitboard occupiedNoKing = b.get_pieces() ^ b.get_pieces<KING>(~C);
-  cur = b.get_pieces<BISHOP>(C);
-  while (cur) {
-    mask |=
-        attacks::sliding_attacks<BISHOP>(pop_least_square(cur), occupiedNoKing);
-  }
-
-  cur = b.get_pieces<ROOK>(C);
-  while (cur) {
-    mask |=
-        attacks::sliding_attacks<ROOK>(pop_least_square(cur), occupiedNoKing);
-  }
-
-  cur = b.get_pieces<QUEEN>(C);
-  while (cur) {
-    mask |=
-        attacks::sliding_attacks<QUEEN>(pop_least_square(cur), occupiedNoKing);
-  }
-
-  mask |= attacks::king_attacks(least_square(b.get_pieces<KING>(C)));
-  return mask;
-}
-
 template <Color C> void gen_moves(Board &b, MoveList &moveList) {
   moveList.count = 0;
   Square kingSquare = least_square(b.get_pieces<KING>(C));
-  Bitboard attackedSquares = gen_attack_mask<~C>(b);
-  b.refresh_checks_pins();
+  Bitboard attackedSquares = b.attack_mask(~C);
+  b.checks_pins();
   if (b.get_checkers() == 0) { // no checkers
     gen_pinned_moves<C>(b, moveList);
     Bitboard nonPinned = ~b.get_pinned();
@@ -305,7 +268,7 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
 
     Bitboard nonPinned = ~b.get_pinned();
     gen_pawn_moves<C>(
-        b.get_pieces<PAWN>(C) & nonPinned, legal, legal & ~b.get_checkers(),
+        b.get_pieces<PAWN>(C) & nonPinned, b.get_checkers(), legal & ~b.get_checkers(),
         moveList); // Only captures are on legal squares and only empty squares
                    // are the legal ones minus the checker
     constexpr Direction D = C == WHITE ? NORTH : SOUTH;

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <cassert>
 
 namespace citterfish {
 
@@ -58,9 +59,11 @@ inline char piece_to_char(Piece piece, Color color) {
   }
 }
 inline Color piece_type_to_color(PieceType pt) {
+  assert(pt != NO_PIECE_TYPE);
   return static_cast<Color>(pt / 6);
 }
 inline Piece piece_type_to_piece(PieceType pt) {
+  assert(pt != NO_PIECE_TYPE);
   return static_cast<Piece>(pt % 6);
 }
 inline char piece_type_to_char(PieceType pieceType) {
@@ -101,7 +104,9 @@ enum CastlingRight : uint8_t {
   WHITE_QUEENSIDE = 1 << 1,
   BLACK_KINGSIDE = 1 << 2,
   BLACK_QUEENSIDE = 1 << 3,
-  ALL_CASTLE = WHITE_QUEENSIDE|WHITE_KINGSIDE|BLACK_QUEENSIDE|BLACK_KINGSIDE
+  WHITE_CASTLE = WHITE_QUEENSIDE|WHITE_KINGSIDE,
+  BLACK_CASTLE = BLACK_QUEENSIDE|BLACK_KINGSIDE,
+  ALL_CASTLE = WHITE_CASTLE|BLACK_CASTLE
 };
 enum CastlingBB : Bitboard {
   WHITE_KINGSIDE_EMPTY = 96ULL,
@@ -254,11 +259,17 @@ private:
 
 public:
   Move() = default;
-  Move(Square from, Square to, MoveType type = REGULAR,
-       Piece promotion_piece = KNIGHT) {
+  Move(Square from, Square to) {
+    move_data = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6);
+  }
+  Move(Square from, Square to, MoveType type) {
+    move_data = move_data = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6) |
+                (static_cast<uint16_t>(type) << 14);
+  }
+  Move(Square from, Square to, Piece promotion_piece) {
     move_data = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6) |
                 ((static_cast<uint16_t>(promotion_piece) - 1) << 12) |
-                (static_cast<uint16_t>(type) << 14);
+                (static_cast<uint16_t>(PROMOTION) << 14);
   }
   constexpr Square get_from_square() const {
     return static_cast<Square>(move_data & 0x3F);
@@ -273,6 +284,16 @@ public:
     return static_cast<Piece>(((move_data >> 12) & 0x03) + 1);
   }
 };
+
+inline std::ostream &operator<<(std::ostream &os, const Move &m) {
+  std::string out;
+  out+=square_to_string(m.get_from_square())+square_to_string(m.get_to_square());
+  if (m.get_move_type() == PROMOTION) {
+    out+=piece_to_char(m.get_promotion_piece(), BLACK);
+  }
+  os << out;
+  return os;
+}
 constexpr uint8_t MAX_MOVES = 224;
 
 constexpr uint32_t ROOK_TABLE_SIZE = 88024;

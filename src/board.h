@@ -26,6 +26,7 @@ struct StateInfo {
   StateInfo *prevSt;
 
   StateInfo() = default;
+  bool operator==(const StateInfo&) const = default;
 };
 
 class Board {
@@ -65,8 +66,11 @@ public:
   Bitboard get_checkers() const { return st->checkers; }
   Bitboard get_pinned() const { return st->pinnedPieces; }
   Bitboard get_pinners() const { return st->pinners; }
+  StateInfo* get_state() const {return st;}
+  Piece get_captured() const {return st->captured; }
 
-void refresh_checks_pins();
+void checks_pins();
+Bitboard attack_mask(Color c);
 
 void make_move(Move move, StateInfo *newSt);
 void unmake_move(Move move);
@@ -121,6 +125,27 @@ void remove_piece(Piece p, Color c, Square s) {
   void refresh_bitboards();
   void refresh_zobrist_hash();
   std::string to_fen() const;
+
+  bool operator==(const Board &b) const {
+    bool eq = true;
+    for(int i = PAWN; i <= KING; ++i) {
+      for (int j = WHITE; j <= BLACK; ++j) {
+        eq&=pieces[j][i] == b.pieces[j][i];
+      }
+    }
+    eq&= occupied[WHITE] == b.occupied[WHITE];
+    eq&= occupied[BLACK] == b.occupied[BLACK];
+    eq&= allOccupied == b.allOccupied;
+    eq&= isWhite == b.isWhite;
+    eq&= fullmoveClock == b.fullmoveClock;
+    for (Square s = a1; s <= h8; ++s) {
+      eq&= pieceMap[s] == b.pieceMap[s];
+    }
+    eq&= st == b.st;
+
+
+    return eq;
+  };
 };
 
 std::ostream &operator<<(std::ostream &os, const Board &b);

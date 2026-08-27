@@ -11,6 +11,12 @@ struct MoveList {
   uint8_t count;
 
   void add_move(const Move &move) { moves[count++] = move; }
+  void add_promo(const Square from, const Square to) {
+    add_move(Move(from, to, QUEEN));
+    add_move(Move(from, to, KNIGHT));
+    add_move(Move(from, to, ROOK));
+    add_move(Move(from, to, BISHOP));
+  }
 };
 
 void gen_moves(Board &board, MoveList &move_list);
