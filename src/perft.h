@@ -6,6 +6,7 @@
 #include "stdio.h"
 #include <cstdint>
 #include <cassert>
+#include <chrono>
 
 namespace citterfish {
     namespace detail {
@@ -23,6 +24,7 @@ namespace citterfish {
         }
         StateInfo st;
         uint64_t nodes = 0;
+
         for (int i = 0; i < moveList.count; i++) {
             Move move = moveList.moves[i];
             #ifndef NDEBUG
@@ -34,13 +36,16 @@ namespace citterfish {
             nodes+=perft_helper(depth-1, b);
             b.unmake_move(move);
             --detail::moveStack.count;
-            if (before != b || stBefore != *b.get_state()) {
-                std::cout<<b<<std::endl;
-                for (int i = 0; i < detail::moveStack.count; i++) {
-                    std::cout<<detail::moveStack.moves[i] << " ";
+
+            #ifndef NDEBUG
+                if (before != b || stBefore != *b.get_state()) {
+                    std::cout<<b<<std::endl;
+                    for (int i = 0; i < detail::moveStack.count; i++) {
+                        std::cout<<detail::moveStack.moves[i] << " ";
+                    }
+                    std::cout<<std::endl;
                 }
-                std::cout<<std::endl;
-            }
+            #endif
             assert(before == b);
             assert(stBefore == *b.get_state());
         }
@@ -48,6 +53,7 @@ namespace citterfish {
     }
 
     inline void perft(int depth, Board &b) {
+        auto start = std::chrono::steady_clock::now();
         detail::moveStack.count = 0;
         MoveList moveList;
         gen_moves(b, moveList);
@@ -79,6 +85,9 @@ namespace citterfish {
             }
         }
         printf("Moves Generated: %llu\n", nodes);
+        auto end = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cout << "Nodes/s: " << static_cast<uint64_t>(static_cast<float>(nodes)/elapsed.count()*1000) << std::endl;        
     }
 }
 }

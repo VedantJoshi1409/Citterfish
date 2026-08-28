@@ -70,7 +70,7 @@ public:
   Piece get_captured() const {return st->captured; }
 
 void checks_pins();
-Bitboard attack_mask(Color c);
+Bitboard attack_mask(Color c) const;
 
 void make_move(Move move, StateInfo *newSt);
 void unmake_move(Move move);
@@ -120,6 +120,18 @@ void remove_piece(Piece p, Color c, Square s, Bitboard squareBB) {
 void remove_piece(Piece p, Color c, Square s) {
     return remove_piece(p, c, s, square_to_bb(s));
   }
+template <CastlingRight CR> 
+bool can_castle(Bitboard enemyAttacks) const {
+  if constexpr(CR == WHITE_KINGSIDE) {
+    return (st->castlingRights & WHITE_KINGSIDE) != 0 && (allOccupied & WHITE_KINGSIDE_EMPTY) == 0 && (enemyAttacks & WHITE_KINGSIDE_ATTACKED) == 0;
+  } else if constexpr (CR == WHITE_QUEENSIDE) {
+    return (st->castlingRights & WHITE_QUEENSIDE) != 0 && (allOccupied & WHITE_QUEENSIDE_EMPTY) == 0 && (enemyAttacks & WHITE_QUEENSIDE_ATTACKED) == 0;
+  } else if constexpr (CR == BLACK_KINGSIDE) {
+    return (st->castlingRights & BLACK_KINGSIDE) != 0 && (allOccupied & BLACK_KINGSIDE_EMPTY) == 0 && (enemyAttacks & BLACK_KINGSIDE_ATTACKED) == 0;
+  } else {
+    return (st->castlingRights & BLACK_QUEENSIDE) != 0 && (allOccupied & BLACK_QUEENSIDE_EMPTY) == 0 && (enemyAttacks & BLACK_QUEENSIDE_ATTACKED) == 0;
+  }
+}
 
   void refresh_piece_map();
   void refresh_bitboards();

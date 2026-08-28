@@ -132,7 +132,7 @@ void Board::refresh_zobrist_hash() {
   st->zobristHash ^= zobrist::getCastlingKey(st->castlingRights);
 }
 
-Bitboard Board::attack_mask(Color c) {
+Bitboard Board::attack_mask(Color c) const  {
   Direction d = c == WHITE ? NORTH : SOUTH;
   Bitboard mask = 0;
   mask |= attacks::pawn_attacks(c, pieces[c][PAWN]);
