@@ -70,6 +70,7 @@ namespace citterfish {
                     const StateInfo stBefore = *b.get_state();
 
                 #endif
+                std::cout << "Making move: " << move <<  static_cast<int>(move.get_move_type()) << std::endl;
                 b.make_move(move, &st);
                 detail::moveStack.add_move(move);
                 uint64_t count = perft_helper(depth-1, b);

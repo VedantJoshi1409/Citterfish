@@ -59,6 +59,14 @@ inline Bitboard sliding_attacks(Square square, Bitboard occupied) {
   }
   const Magic &m = (P == ROOK) ? ROOK_MAGICS[square] : BISHOP_MAGICS[square];
   uint64_t idx = (((m.mask & occupied) * m.magic) >> m.shift) + m.idx;
+  std::cout << "ATTACK INFO" <<std::endl;
+  std::cout << idx << std::endl;
+  print_bb(m.mask);
+  print_bb(occupied);
+  std::cout << (m.mask & occupied) * m.magic << std::endl;
+  std::cout << (((m.mask & occupied) * m.magic) >> m.shift) << std::endl;
+  std::cout << m.idx << std::endl;
+  std::cout << "ATTACK INFO DONE"<<std::endl;
   return (P == ROOK) ? ROOK_ATTACK_TABLE[idx] : BISHOP_ATTACK_TABLE[idx];
 }
 

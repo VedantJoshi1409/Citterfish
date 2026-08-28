@@ -11,7 +11,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 4. Define the executable and its source files
 add_executable(citterfish src/main.cpp src/board.cpp src/zobrist.cpp src/movegen.cpp src/attacks.cpp src/magics.cpp)
 target_compile_options(citterfish PRIVATE
-    -O3
+    -O0
     -flto
     -march=native
+    # -DNDEBUG
+    # -g
+    # -O0
 )
