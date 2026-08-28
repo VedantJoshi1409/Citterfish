@@ -157,11 +157,11 @@ template <Color C> void gen_pinned_moves(Board &b, MoveList &moveList) {
   constexpr bool is_white = C == WHITE;
   Bitboard pinners = b.get_pinners();
   Square king_square = least_square(b.get_pieces<KING>(C));
-
   while (pinners) { // get all pinned piece moves
     Square attacker = pop_least_square(pinners);
+    Bitboard attacker_bb = 1ULL << attacker;
     Bitboard pin_ray =
-        attacks::from_to_bb(king_square, attacker) | 1ULL << attacker;
+        attacks::from_to_bb(king_square, attacker) | attacker_bb;
     Bitboard pinned_bb = pin_ray & b.get_pinned();
     Square pinned_piece = least_square(pinned_bb);
     Piece piece = piece_type_to_piece(b.piece_on(pinned_piece));
@@ -171,7 +171,7 @@ template <Color C> void gen_pinned_moves(Board &b, MoveList &moveList) {
         gen_en_passant<C>(pinned_bb, b.en_passant_square(), moveList);
       }
 
-      Bitboard pawn_moves = attacks::pawn_attacks<C>(pinned_bb) & attacker;
+      Bitboard pawn_moves = attacks::pawn_attacks<C>(pinned_bb) & attacker_bb;
       pawn_moves |= shift<D>(pinned_bb);
       if ((pinned_bb & (is_white ? RANK_2 : RANK_7)) != 0)
         pawn_moves |= shift<static_cast<Direction>(2 * D)>(pinned_bb);
