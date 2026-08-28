@@ -297,7 +297,7 @@ void Board::unmake_move(Move move) {
     move_piece(moving, c, to, from);
     put_piece(PAWN, ~c, epSquare_from_dest(c, to));
   } else if (type == CASTLE) {
-    if (isWhite) {
+    if (!isWhite) { 
       if (to == g1) {
         move_piece(KING, c, g1, e1);
         move_piece(ROOK, c, f1, h1);
