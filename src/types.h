@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cassert>
 #include <cctype>
 #include <cstdint>
 #include <iostream>
 #include <string>
-#include <cassert>
 
 namespace citterfish {
 
@@ -104,9 +104,9 @@ enum CastlingRight : uint8_t {
   WHITE_QUEENSIDE = 1 << 1,
   BLACK_KINGSIDE = 1 << 2,
   BLACK_QUEENSIDE = 1 << 3,
-  WHITE_CASTLE = WHITE_QUEENSIDE|WHITE_KINGSIDE,
-  BLACK_CASTLE = BLACK_QUEENSIDE|BLACK_KINGSIDE,
-  ALL_CASTLE = WHITE_CASTLE|BLACK_CASTLE
+  WHITE_CASTLE = WHITE_QUEENSIDE | WHITE_KINGSIDE,
+  BLACK_CASTLE = BLACK_QUEENSIDE | BLACK_KINGSIDE,
+  ALL_CASTLE = WHITE_CASTLE | BLACK_CASTLE
 };
 enum CastlingBB : Bitboard {
   WHITE_KINGSIDE_EMPTY = 96ULL,
@@ -119,14 +119,14 @@ enum CastlingBB : Bitboard {
   BLACK_QUEENSIDE_ATTACKED = 864691128455135232ULL
 };
 inline constexpr uint8_t CastlingMask[64] = {
-    13, 15, 15, 15, 12, 15, 15, 14,   // rank 1:  a1, e1, h1
-    15, 15, 15, 15, 15, 15, 15, 15,   // rank 2
-    15, 15, 15, 15, 15, 15, 15, 15,   // rank 3
-    15, 15, 15, 15, 15, 15, 15, 15,   // rank 4
-    15, 15, 15, 15, 15, 15, 15, 15,   // rank 5
-    15, 15, 15, 15, 15, 15, 15, 15,   // rank 6
-    15, 15, 15, 15, 15, 15, 15, 15,   // rank 7
-     7, 15, 15, 15,  3, 15, 15, 11,   // rank 8:  a8, e8, h8
+    13, 15, 15, 15, 12, 15, 15, 14, // rank 1:  a1, e1, h1
+    15, 15, 15, 15, 15, 15, 15, 15, // rank 2
+    15, 15, 15, 15, 15, 15, 15, 15, // rank 3
+    15, 15, 15, 15, 15, 15, 15, 15, // rank 4
+    15, 15, 15, 15, 15, 15, 15, 15, // rank 5
+    15, 15, 15, 15, 15, 15, 15, 15, // rank 6
+    15, 15, 15, 15, 15, 15, 15, 15, // rank 7
+    7,  15, 15, 15, 3,  15, 15, 11, // rank 8:  a8, e8, h8
 };
 
 // clang-format off
@@ -215,13 +215,13 @@ template <Color C> constexpr Direction pawn_dir() {
     return SOUTH;
 }
 constexpr Square epSquare_from_moving(Color c, Square moving) {
-    return moving +  (c == WHITE ? NORTH : SOUTH);
+  return moving + (c == WHITE ? NORTH : SOUTH);
 }
 constexpr Square epSquare_from_dest(Color c, Square dest) {
-    return dest + (c == WHITE ? SOUTH : NORTH);
+  return dest + (c == WHITE ? SOUTH : NORTH);
 }
 constexpr bool is_double_push(Square from, Square to) {
-  return std::abs(from-to)==16;
+  return std::abs(from - to) == 16;
 }
 constexpr Bitboard square_to_bb(Square s) {
   return 1ULL << static_cast<int8_t>(s);
@@ -263,8 +263,9 @@ public:
     move_data = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6);
   }
   Move(Square from, Square to, MoveType type) {
-    move_data = move_data = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6) |
-                (static_cast<uint16_t>(type) << 14);
+    move_data = move_data = static_cast<uint16_t>(from) |
+                            (static_cast<uint16_t>(to) << 6) |
+                            (static_cast<uint16_t>(type) << 14);
   }
   Move(Square from, Square to, Piece promotion_piece) {
     move_data = static_cast<uint16_t>(from) | (static_cast<uint16_t>(to) << 6) |
@@ -287,17 +288,18 @@ public:
 
 inline std::ostream &operator<<(std::ostream &os, const Move &m) {
   std::string out;
-  out+=square_to_string(m.get_from_square())+square_to_string(m.get_to_square());
+  out += square_to_string(m.get_from_square()) +
+         square_to_string(m.get_to_square());
   if (m.get_move_type() == PROMOTION) {
-    out+=piece_to_char(m.get_promotion_piece(), BLACK);
+    out += piece_to_char(m.get_promotion_piece(), BLACK);
   }
   os << out;
   return os;
 }
 constexpr uint8_t MAX_MOVES = 224;
 
-constexpr uint32_t ROOK_TABLE_SIZE = 88024;
-constexpr uint32_t BISHOP_TABLE_SIZE = 4782;
+constexpr uint32_t BISHOP_TABLE_SIZE = 4783;
+constexpr uint32_t ROOK_TABLE_SIZE = 88025;
 
 class PRNG {
   uint64_t state;

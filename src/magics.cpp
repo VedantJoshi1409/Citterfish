@@ -233,8 +233,10 @@ template <Piece P> bool verify_attack_map() {
       uint64_t hashIdx = ((occupancy * m.magic) >> m.shift) + m.idx;
       uint64_t attacks = (P == ROOK) ? slow_rook_attack(square, occupancy)
                                      : slow_bishop_attack(square, occupancy);
-      if (((P == ROOK) ? ROOK_ATTACK_TABLE[hashIdx]
+      if (hashIdx >= ((P == ROOK) ? ROOK_TABLE_SIZE : BISHOP_TABLE_SIZE) ||
+          ((P == ROOK) ? ROOK_ATTACK_TABLE[hashIdx]
                        : BISHOP_ATTACK_TABLE[hashIdx]) != attacks) {
+        std::cout << hashIdx << std::endl;
         return false;
       }
     }

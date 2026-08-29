@@ -17,11 +17,11 @@ void init_attacks();
 
 template <Color C> inline Bitboard pawn_attacks(Bitboard pawns) {
   if constexpr (C == WHITE) {
-    return shift<NORTH+WEST>(pawns & ~FILE_A) |
-           shift<NORTH+EAST>(pawns & ~FILE_H);
+    return shift<NORTH + WEST>(pawns & ~FILE_A) |
+           shift<NORTH + EAST>(pawns & ~FILE_H);
   } else {
-    return shift<SOUTH+WEST>(pawns & ~FILE_A) |
-           shift<SOUTH+EAST>(pawns & ~FILE_H);
+    return shift<SOUTH + WEST>(pawns & ~FILE_A) |
+           shift<SOUTH + EAST>(pawns & ~FILE_H);
   }
 }
 inline Bitboard pawn_attacks(Color c, Bitboard pawns) {
@@ -59,14 +59,6 @@ inline Bitboard sliding_attacks(Square square, Bitboard occupied) {
   }
   const Magic &m = (P == ROOK) ? ROOK_MAGICS[square] : BISHOP_MAGICS[square];
   uint64_t idx = (((m.mask & occupied) * m.magic) >> m.shift) + m.idx;
-  std::cout << "ATTACK INFO" <<std::endl;
-  std::cout << idx << std::endl;
-  print_bb(m.mask);
-  print_bb(occupied);
-  std::cout << (m.mask & occupied) * m.magic << std::endl;
-  std::cout << (((m.mask & occupied) * m.magic) >> m.shift) << std::endl;
-  std::cout << m.idx << std::endl;
-  std::cout << "ATTACK INFO DONE"<<std::endl;
   return (P == ROOK) ? ROOK_ATTACK_TABLE[idx] : BISHOP_ATTACK_TABLE[idx];
 }
 
