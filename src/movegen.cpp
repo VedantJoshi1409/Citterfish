@@ -93,13 +93,13 @@ void gen_en_passant(Bitboard pawns, Bitboard king, Bitboard orthoAttackers,
     constexpr Bitboard epRank = C == WHITE ? RANK_5 : RANK_4;
     if ((king & epRank) != 0 && (orthoAttackers & epRank) != 0) {
       occupied ^= attackers | (1ULL << (epSquare - D));
+
       if ((attacks::sliding_attacks<ROOK>(least_square(king), occupied) &
            (orthoAttackers & epRank)) != 0) {
         // king is on ep rank and without the pawns in the way it would be in
         // check
         return;
       }
-    } else {
       Square from = least_square(attackers);
       moveList.add_move(Move(from, epSquare, ENPASSANT));
     }
@@ -252,9 +252,10 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
     gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces(~C),
                       ~b.get_pieces(), legal, moveList);
     constexpr Direction D = C == WHITE ? NORTH : SOUTH;
-    if (b.en_passant_square() - D ==
-        checker) { // can only en passant in check if the checker is the double
-                   // pawn push
+    if ((b.en_passant_square() != NO_SQUARE) &&
+        (b.en_passant_square() - D ==
+         checker)) { // can only en passant in check if the checker is the
+                     // double pawn push
       gen_en_passant<C>(b.get_pieces<PAWN>(C) & nonPinned,
                         b.get_pieces<KING>(C),
                         b.get_pieces<ROOK>(~C) | b.get_pieces<QUEEN>(~C),
