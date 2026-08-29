@@ -26,6 +26,12 @@ inline uint64_t perft_helper(int depth, Board &b) {
   StateInfo st;
   uint64_t nodes = 0;
 
+#ifdef PRINTMOVE
+  for (int i = 0; i < detail::moveStack.count; i++) {
+    std::cout << detail::moveStack.moves[i] << " ";
+  }
+  std::cout << std::endl;
+#endif
   for (int i = 0; i < moveList.count; i++) {
     Move move = moveList.moves[i];
 #ifndef NDEBUG
@@ -71,8 +77,11 @@ inline void perft(int depth, Board &b) {
         const StateInfo stBefore = *b.get_state();
 
 #endif
+#ifdef PRINTMOVE
         std::cout << "Making move: " << move
                   << static_cast<int>(move.get_move_type()) << std::endl;
+#endif
+
         b.make_move(move, &st);
         detail::moveStack.add_move(move);
         uint64_t count = perft_helper(depth - 1, b);
@@ -85,7 +94,8 @@ inline void perft(int depth, Board &b) {
         assert(before == b);
         assert(stBefore == *b.get_state());
       } else {
-        std::printf("%s%s\n", square_to_string(move.get_from_square()).c_str(),
+        std::printf("%s%s: 1\n",
+                    square_to_string(move.get_from_square()).c_str(),
                     square_to_string(move.get_to_square()).c_str());
         ++nodes;
       }
