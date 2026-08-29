@@ -6,19 +6,17 @@
 
 namespace citterfish {
 
-template <Direction D>
-void splat_pawn_moves(Bitboard bb, MoveList &moveList) {
+template <Direction D> void splat_pawn_moves(Bitboard bb, MoveList &moveList) {
   while (bb) {
     Square to = pop_least_square(bb);
-    moveList.add_move(Move(to-D, to));
+    moveList.add_move(Move(to - D, to));
   }
 }
 
-template <Direction D>
-void splat_promo_moves(Bitboard bb, MoveList &moveList) {
+template <Direction D> void splat_promo_moves(Bitboard bb, MoveList &moveList) {
   while (bb) {
     Square to = pop_least_square(bb);
-    moveList.add_promo(to-D, to);
+    moveList.add_promo(to - D, to);
   }
 }
 
@@ -30,38 +28,42 @@ void splat_moves(Square from, Bitboard bb, MoveList &moveList) {
 }
 
 template <Direction D>
-void gen_pawn_push(Bitboard pawns, Bitboard empty, Bitboard legal, MoveList &moveList) {
+void gen_pawn_push(Bitboard pawns, Bitboard empty, Bitboard legal,
+                   MoveList &moveList) {
   constexpr Bitboard promoRank = D == NORTH ? RANK_8 : RANK_1;
   Bitboard bb = (shift<D>(pawns)) & empty; // Generate single pawn push
-  Bitboard doublePushBB = shift<D>(bb & (D == NORTH ? RANK_3 : RANK_6)) & empty & legal; //only pawns that can move up one can move up double 
+  Bitboard doublePushBB =
+      shift<D>(bb & (D == NORTH ? RANK_3 : RANK_6)) & empty &
+      legal; // only pawns that can move up one can move up double
   bb &= legal;
 
   Bitboard promo = bb & promoRank;
   bb &= ~promoRank;
   splat_pawn_moves<D>(bb, moveList);
   splat_promo_moves<D>(promo, moveList);
-  splat_pawn_moves<static_cast<Direction>(2*D)>(doublePushBB, moveList);
-}  
+  splat_pawn_moves<static_cast<Direction>(2 * D)>(doublePushBB, moveList);
+}
 
 template <Direction D>
-void gen_pawn_capture(Bitboard pawns, Bitboard legalTargets, MoveList &moveList) {
+void gen_pawn_capture(Bitboard pawns, Bitboard legalTargets,
+                      MoveList &moveList) {
   constexpr Bitboard promoRank = D == NORTH ? RANK_8 : RANK_1;
-  Bitboard bb = shift<D+WEST>(pawns & ~FILE_A) & legalTargets;
+  Bitboard bb = shift<D + WEST>(pawns & ~FILE_A) & legalTargets;
   Bitboard promo = bb & promoRank;
   bb &= ~promoRank;
-  splat_pawn_moves<D+WEST>(bb, moveList);
-  splat_promo_moves<D+WEST>(promo, moveList);
+  splat_pawn_moves<D + WEST>(bb, moveList);
+  splat_promo_moves<D + WEST>(promo, moveList);
 
-  bb = shift<D+EAST>(pawns & ~FILE_H) & legalTargets;
+  bb = shift<D + EAST>(pawns & ~FILE_H) & legalTargets;
   promo = bb & promoRank;
   bb &= ~promoRank;
-  splat_pawn_moves<D+EAST>(bb, moveList);
-  splat_promo_moves<D+EAST>(promo, moveList);
+  splat_pawn_moves<D + EAST>(bb, moveList);
+  splat_promo_moves<D + EAST>(promo, moveList);
 }
 
 template <Color C>
-void gen_pawn_moves(Bitboard pawns, Bitboard targets, Bitboard empty, Bitboard legal,
-                    MoveList &moveList) {
+void gen_pawn_moves(Bitboard pawns, Bitboard targets, Bitboard empty,
+                    Bitboard legal, MoveList &moveList) {
   constexpr Direction D = pawn_dir<C>();
   constexpr Bitboard promoRank = D == NORTH ? RANK_7 : RANK_2;
   gen_pawn_push<D>(pawns, empty, legal, moveList);
@@ -144,7 +146,7 @@ void gen_castle_moves(Bitboard enemyAttacks, Board &b, MoveList &moveList) {
     }
   } else {
     if (b.can_castle<BLACK_KINGSIDE>(enemyAttacks)) {
-      moveList.add_move(Move(e8,g8,CASTLE));
+      moveList.add_move(Move(e8, g8, CASTLE));
     }
     if (b.can_castle<BLACK_QUEENSIDE>(enemyAttacks)) {
       moveList.add_move(Move(e8, c8, CASTLE));
@@ -160,23 +162,24 @@ template <Color C> void gen_pinned_moves(Board &b, MoveList &moveList) {
   while (pinners) { // get all pinned piece moves
     Square attacker = pop_least_square(pinners);
     Bitboard attacker_bb = 1ULL << attacker;
-    Bitboard pin_ray =
-        attacks::from_to_bb(king_square, attacker) | attacker_bb;
+    Bitboard pin_ray = attacks::from_to_bb(king_square, attacker);
+    Bitboard pin_ray_with_attacker = pin_ray | attacker_bb;
     Bitboard pinned_bb = pin_ray & b.get_pinned();
     Square pinned_piece = least_square(pinned_bb);
     Piece piece = piece_type_to_piece(b.piece_on(pinned_piece));
 
     if (piece == PAWN) {
-      if (((1ULL << b.en_passant_square()) & pin_ray) != 0) { // enPassantable
+      if (((1ULL << b.en_passant_square()) & pin_ray_with_attacker) !=
+          0) { // enPassantable
         gen_en_passant<C>(pinned_bb, b.en_passant_square(), moveList);
       }
 
       Bitboard pawn_moves = attacks::pawn_attacks<C>(pinned_bb) & attacker_bb;
-      pawn_moves |= shift<D>(pinned_bb);
+      pawn_moves |= shift<D>(pinned_bb) & pin_ray;
       if ((pinned_bb & (is_white ? RANK_2 : RANK_7)) != 0)
-        pawn_moves |= shift<static_cast<Direction>(2 * D)>(pinned_bb);
+        pawn_moves |= shift<static_cast<Direction>(2 * D)>(pinned_bb) & pin_ray;
 
-      pawn_moves &= pin_ray; // only keep moves along pin ray
+      pawn_moves &= pin_ray_with_attacker; // only keep moves along pin ray
       while (pawn_moves) {
         Square to = pop_least_square(pawn_moves);
         moveList.add_move(Move(pinned_piece, to));
@@ -186,24 +189,25 @@ template <Color C> void gen_pinned_moves(Board &b, MoveList &moveList) {
     } else {
       switch (piece) {
       case KNIGHT:
-        pin_ray = 0;
+        pin_ray_with_attacker = 0;
         break;
       case BISHOP:
-        pin_ray &= attacks::diag_rays(pinned_piece);
+        pin_ray_with_attacker &= attacks::diag_rays(pinned_piece);
         break;
       case ROOK:
         // only can be pinned once rook moves so no castling
-        pin_ray &= attacks::ortho_rays(pinned_piece);
+        pin_ray_with_attacker &= attacks::ortho_rays(pinned_piece);
         break;
       case QUEEN:
-        pin_ray &= (attacks::ortho_rays(pinned_piece) |
-                    attacks::diag_rays(pinned_piece));
+        pin_ray_with_attacker &= (attacks::ortho_rays(pinned_piece) |
+                                  attacks::diag_rays(pinned_piece));
         break;
       default:
         break;
       }
-      while (pin_ray) {
-        moveList.add_move(Move(pinned_piece, pop_least_square(pin_ray)));
+      while (pin_ray_with_attacker) {
+        moveList.add_move(
+            Move(pinned_piece, pop_least_square(pin_ray_with_attacker)));
       }
     }
   }
@@ -217,11 +221,13 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
   if (b.get_checkers() == 0) { // no checkers
     gen_pinned_moves<C>(b, moveList);
     Bitboard nonPinned = ~b.get_pinned();
-    gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces(~C), ~b.get_pieces(), ALL_SQUARES, moveList);
+    gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces(~C),
+                      ~b.get_pieces(), ALL_SQUARES, moveList);
     if (b.en_passant_square() != NO_SQUARE) {
-      gen_en_passant<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces<KING>(C),
-                      b.get_pieces<ROOK>(~C) | b.get_pieces<QUEEN>(~C),
-                      b.get_pieces(), b.en_passant_square(), moveList);
+      gen_en_passant<C>(b.get_pieces<PAWN>(C) & nonPinned,
+                        b.get_pieces<KING>(C),
+                        b.get_pieces<ROOK>(~C) | b.get_pieces<QUEEN>(~C),
+                        b.get_pieces(), b.en_passant_square(), moveList);
     }
     gen_knight_moves(b.get_pieces<KNIGHT>(C) & nonPinned, b.get_pieces(C),
                      moveList);
@@ -233,8 +239,7 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
                             b.get_pieces(), moveList);
     gen_king_moves(b.get_pieces<KING>(C), b.get_pieces(C) | attackedSquares,
                    moveList);
-    gen_castle_moves<C>(attackedSquares, b,
-                        moveList);
+    gen_castle_moves<C>(attackedSquares, b, moveList);
 
   } else if ((b.get_checkers() & (b.get_checkers() - 1)) == 0) { // one checker
     Square checker = static_cast<Square>(std::countr_zero(b.get_checkers()));
@@ -244,7 +249,8 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
         b.get_checkers();
 
     Bitboard nonPinned = ~b.get_pinned();
-    gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces(~C), ~b.get_pieces(), legal, moveList);
+    gen_pawn_moves<C>(b.get_pieces<PAWN>(C) & nonPinned, b.get_pieces(~C),
+                      ~b.get_pieces(), legal, moveList);
     constexpr Direction D = C == WHITE ? NORTH : SOUTH;
     if (b.en_passant_square() - D ==
         checker) { // can only en passant in check if the checker is the double
@@ -263,8 +269,8 @@ template <Color C> void gen_moves(Board &b, MoveList &moveList) {
                              b.get_pieces(), moveList);
     gen_slider_moves<QUEEN>(b.get_pieces<QUEEN>(C) & nonPinned, ~legal,
                             b.get_pieces(), moveList);
-    gen_king_moves(b.get_pieces<KING>(C),
-                   b.get_pieces(C) | attackedSquares, moveList);
+    gen_king_moves(b.get_pieces<KING>(C), b.get_pieces(C) | attackedSquares,
+                   moveList);
   } else { // two checkers
     gen_king_moves(b.get_pieces<KING>(C), b.get_pieces(C) | attackedSquares,
                    moveList);
