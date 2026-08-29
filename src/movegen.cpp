@@ -102,12 +102,12 @@ void gen_en_passant(Bitboard pawns, Bitboard king, Bitboard orthoAttackers,
       }
       Square from = least_square(attackers);
       moveList.add_move(Move(from, epSquare, ENPASSANT));
+      return;
     }
-  } else {
-    while (attackers) { // no edge case
-      Square from = pop_least_square(attackers);
-      moveList.add_move(Move(from, epSquare, ENPASSANT));
-    }
+  }
+  while (attackers) { // no edge case
+    Square from = pop_least_square(attackers);
+    moveList.add_move(Move(from, epSquare, ENPASSANT));
   }
 }
 
