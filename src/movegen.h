@@ -6,6 +6,8 @@
 
 namespace citterfish {
 
+enum GenType { LEGAL, PSEUDOLEGAL };
+
 struct MoveList {
   std::array<Move, MAX_MOVES> moves;
   uint8_t count;

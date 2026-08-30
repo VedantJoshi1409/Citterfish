@@ -1,6 +1,7 @@
 #include "attacks.h"
 #include "board.h"
 #include "perft.h"
+#include "uci.h"
 #include "zobrist.h"
 #include <iostream>
 
@@ -8,10 +9,7 @@ int main() {
   using namespace citterfish;
   zobrist::init_zobrist();
   attacks::init_attacks();
-
-  Board board;
-  std::cout << board << std::endl;
-  perft(7, board);
+  temp_perft();
 
   return 0;
 }

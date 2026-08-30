@@ -2,12 +2,12 @@
 
 #include "board.h"
 #include "movegen.h"
-#include "stdio.h"
 #include "types.h"
 #include <cassert>
 #include <chrono>
 #include <cinttypes>
 #include <cstdint>
+#include <iostream>
 
 namespace citterfish {
 namespace detail {
@@ -100,7 +100,6 @@ inline void perft(int depth, Board &b) {
         ++nodes;
       }
     }
-    printf("Moves Generated: %" PRIu64 "\n", nodes);
     auto end = std::chrono::steady_clock::now();
     auto elapsed =
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
@@ -108,6 +107,7 @@ inline void perft(int depth, Board &b) {
               << static_cast<uint64_t>(static_cast<float>(nodes) /
                                        elapsed.count() * 1000)
               << std::endl;
+    printf("Moves Generated: %" PRIu64 "\n", nodes);
   }
 }
 } // namespace citterfish
